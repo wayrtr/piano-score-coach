@@ -1,0 +1,3408 @@
+:root {
+  color-scheme: light;
+
+  /* --- Surfaces (neutral workspace) --- */
+  --bg: #f1eee7;
+  --bg-tint: rgba(31, 109, 115, 0.04);
+  --card: #fffdf9;
+  --surface-sunken: #f4f1e9;
+  --surface-raised: #fffdf9;
+
+  /* --- Text --- */
+  --ink: #273630;
+  --muted: #4b5c57;
+
+  /* --- Accent (petrol teal complements the maple fretboard) --- */
+  --accent: #1f6d73;
+  --accent-deep: #15555b;
+  --accent-soft: rgba(31, 109, 115, 0.1);
+  --accent-line: rgba(31, 109, 115, 0.3);
+
+  /* --- Functional (ink blue — used for preview / next-note / tuner) --- */
+  --info: #347586;
+  --info-deep: #225d6c;
+  --info-soft: rgba(52, 117, 134, 0.1);
+  --info-line: rgba(52, 117, 134, 0.27);
+
+  /* --- Semantic --- */
+  --danger: #b23a26;
+  --focus: #176f79;
+  --success: #3a6b4a;
+
+  /* --- Borders --- */
+  --line: #e2ddd2;
+  --line-strong: #c9c4b9;
+
+  /* --- Control height (shared baseline for inputs/selects/toggles) --- */
+  --control-h: 40px;
+  --label-line: 16px;
+
+  /* --- Radius scale --- */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* --- Shadow scale (warm-tinted, layered, soft) --- */
+  --shadow-xs: 0 1px 2px rgba(28, 35, 51, 0.03);
+  --shadow-sm: 0 2px 8px rgba(28, 35, 51, 0.03), 0 1px 2px rgba(28, 35, 51, 0.02);
+  --shadow-md: 0 10px 28px rgba(43, 33, 24, 0.08), 0 2px 6px rgba(28, 35, 51, 0.02);
+  --shadow-lg: 0 20px 48px rgba(43, 33, 24, 0.11), 0 4px 12px rgba(28, 35, 51, 0.03);
+
+  /* --- Aliases (kept for existing references) --- */
+  --shadow-soft: var(--shadow-md);
+  --shadow-raised: var(--shadow-lg);
+
+  /* --- Typography --- */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-serif: var(--font-sans);
+
+  /* --- Sheet-music "paper" (kept light so black OSMD notes stay readable) --- */
+  --sheet-paper: #ffffff;
+  --sheet-sunken: var(--surface-sunken);
+
+  /* --- Per-note palette ---------------------------------------------------
+     Every visible MIDI pitch gets its own color so the SAME note is traceable
+     across the score, its card, its fretboard marker, and its piano key.
+     `--note-fill-{n}` paints the physical instruments (which never darken, so
+     one value each, chosen mid-dark for legible light text). `--note-accent-{n}`
+     paints chips/labels on card surfaces (which do darken — see the dark block).
+     Index 0 is amber, so a chord's first note keeps the familiar warm tone. */
+  --note-fill-0: #bd6815; /* amber */
+  --note-fill-1: #1f8a86; /* teal */
+  --note-fill-2: #7a52c8; /* violet */
+  --note-fill-3: #bf3f6b; /* rose */
+  --note-fill-4: #3f8f52; /* green */
+  --note-fill-5: #a8562f; /* sienna */
+
+  --note-accent-0: #a85712;
+  --note-accent-1: #10716d;
+  --note-accent-2: #6437b8;
+  --note-accent-3: #a52a55;
+  --note-accent-4: #2f7440;
+  --note-accent-5: #8a4423;
+
+  /* High-contrast outlines for the preview ("next note") dashed indicators.
+     Keyed to the physical surface colour, not the UI theme, because piano keys
+     and guitar markers keep their own physical palettes in both light and dark
+     mode:  white keys / guitar markers are always light → need a dark outline;
+     black keys are always dark → need a light outline. */
+  --preview-outline-on-light: rgba(26, 18, 10, 0.72);
+  --preview-outline-on-dark:  rgba(248, 240, 222, 0.82);
+}
+
+/* ============================================================
+   Dark theme — neutral slate. Only the UI "shell" darkens;
+   instrument visuals (piano keys, guitar fretboard) keep their
+   own physical palettes, and the sheet-music paper stays a warm
+   light tone so the black notes remain legible.
+   ============================================================ */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #172725;
+  --bg-tint: rgba(120, 200, 198, 0.05);
+  --card: #1f302d;
+  --surface-sunken: #1a2a28;
+  --surface-raised: #293c38;
+
+  --ink: #f4f1e9;
+  --muted: #c2d1c9;
+
+  --accent: #78c8c6;
+  --accent-deep: #a7deda;
+  --accent-soft: rgba(120, 200, 198, 0.15);
+  --accent-line: rgba(120, 200, 198, 0.35);
+
+  --info: #7bc5d1;
+  --info-deep: #b1dfe4;
+  --info-soft: rgba(123, 197, 209, 0.16);
+  --info-line: rgba(123, 197, 209, 0.38);
+
+  --danger: #e58069;
+  --focus: #8bd7d2;
+  --success: #7bb089;
+
+  --line: #3b514b;
+  --line-strong: #58716a;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(0, 0, 0, 0.35);
+
+  /* Warm dimmed paper instead of glaring white — like sheet music under a lamp. */
+  --sheet-paper: #efe6d4;
+
+  /* Instrument fills stay identical (piano keys / fretboard don't darken), but
+     the chip/label accents lighten so note names stay legible on dark cards. */
+  --note-accent-0: #e79a4c;
+  --note-accent-1: #4fbdb7;
+  --note-accent-2: #a888ea;
+  --note-accent-3: #e97ba0;
+  --note-accent-4: #6ec07f;
+  --note-accent-5: #d68a63;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  overflow-x: clip;
+  background: var(--bg);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] body {
+  background: var(--bg);
+}
+
+body {
+  min-height: 100vh;
+}
+
+.skip-link {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--card);
+  text-decoration: none;
+  transform: translateY(-140%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--card) 82%, transparent);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@media (max-width: 720px) {
+  .theme-toggle {
+    min-height: 40px;
+  }
+
+  .theme-toggle-label {
+    display: none;
+  }
+}
+
+.page-shell {
+  min-height: 100vh;
+  padding: 24px clamp(16px, 3vw, 40px) 48px;
+}
+
+.practice-page-shell {
+  /* Inherits the unified warm tokens from :root — no cold overrides. */
+  background: transparent;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+  gap: 24px;
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  align-items: start;
+}
+
+.dashboard-home {
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+}
+
+.dashboard-home .resume-panel {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.dashboard-home .works-panel {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  /* Natural height — a modest bottom offset from the left column reads fine for
+     a list card and avoids forcing whitespace inside it. */
+  align-self: start;
+}
+
+.dashboard-home .import-panel-collapsible {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+.panel-card {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-md);
+}
+
+.panel-header h1,
+.practice-hero h1,
+.resume-card h2,
+.section-title h2,
+.inspector-summary strong,
+.import-summary strong {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--accent);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hero-card h1 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 4.2rem);
+  line-height: 0.95;
+}
+
+.lede {
+  max-width: 40ch;
+  margin: 16px 0 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.resume-panel {
+  background:
+    radial-gradient(circle at 96% 8%, rgba(194, 105, 28, 0.1), transparent 38%),
+    var(--card);
+}
+
+.resume-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  margin-top: 24px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--radius-md);
+  background: linear-gradient(145deg, #fffdf9, #fbf2e2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), var(--shadow-sm);
+}
+
+.resume-card-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.resume-card h2 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+  line-height: 1.05;
+}
+
+.resume-card p,
+.resume-last-practiced {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.resume-label {
+  color: var(--accent-deep);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.resume-action {
+  min-width: 128px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.resume-empty-state {
+  margin-top: 22px;
+}
+
+.panel-header h1,
+.section-title h2 {
+  margin: 0;
+}
+
+.panel-header .lede {
+  max-width: 46ch;
+}
+
+.import-form {
+  display: grid;
+  gap: 22px;
+  margin-top: 28px;
+}
+
+.import-panel-collapsible {
+  padding: 0;
+  overflow: clip;
+}
+
+.import-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 26px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.import-summary::-webkit-details-marker,
+.secondary-import-options > summary::-webkit-details-marker,
+.inspector-summary::-webkit-details-marker {
+  display: none;
+}
+
+.import-summary::after,
+.secondary-import-options > summary::after,
+.inspector-summary::after {
+  content: "+";
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(154, 78, 20, 0.22);
+  border-radius: 999px;
+  color: var(--accent-deep);
+  font-size: 1.15rem;
+}
+
+.import-panel-collapsible[open] > .import-summary::after,
+.secondary-import-options[open] > summary::after,
+.inspector-details[open] > .inspector-summary::after {
+  content: "−";
+}
+
+.import-summary > span:first-child,
+.inspector-summary > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.import-summary strong {
+  font-size: 1.45rem;
+}
+
+.import-summary-copy {
+  max-width: 30ch;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: right;
+}
+
+.import-panel-content {
+  padding: 0 26px 26px;
+  border-top: 1px solid rgba(216, 206, 188, 0.72);
+}
+
+.source-selection-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 11px 14px;
+  border: 1px solid rgba(154, 78, 20, 0.12);
+  border-radius: 14px;
+  background: rgba(216, 206, 188, 0.18);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.secondary-import-options {
+  border: 1px solid rgba(216, 206, 188, 0.78);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.36);
+}
+
+.secondary-import-options > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+}
+
+.upload-grid-secondary {
+  padding: 0 14px 14px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(107, 93, 73, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(107, 93, 73, 0.25);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.85);
+  color: var(--ink);
+  font: inherit;
+}
+
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.upload-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border: 1px dashed rgba(154, 78, 20, 0.35);
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 251, 244, 0.94)),
+    radial-gradient(circle at top right, rgba(194, 105, 28, 0.1), transparent 42%);
+}
+
+.upload-card-primary {
+  grid-column: 1 / -1;
+  border-style: solid;
+  border-color: rgba(194, 105, 28, 0.34);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 243, 225, 0.96)),
+    radial-gradient(circle at top right, rgba(194, 105, 28, 0.12), transparent 42%);
+}
+
+.upload-card.is-selected {
+  border-color: rgba(47, 107, 69, 0.58);
+  box-shadow: 0 0 0 3px rgba(47, 107, 69, 0.1);
+}
+
+.upload-title em {
+  display: inline-flex;
+  margin-left: 6px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: rgba(47, 107, 69, 0.12);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+.upload-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.upload-copy {
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.visually-hidden,
+.file-input-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.upload-card:has(.file-input-visually-hidden:focus-visible) {
+  outline: 3px solid rgba(32, 113, 206, 0.72);
+  outline-offset: 3px;
+}
+
+.file-picker-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-height: 42px;
+  padding: 8px 13px;
+  border: 1px solid rgba(154, 78, 20, 0.22);
+  border-radius: 10px;
+  background: #fffaf2;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.file-picker-button:hover {
+  background: #fff3df;
+}
+
+.page-sorter-shell,
+.works-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.privacy-note {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 20px;
+  background: rgba(216, 206, 188, 0.22);
+  border: 1px solid rgba(154, 78, 20, 0.12);
+}
+
+.privacy-note p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.privacy-note details {
+  color: var(--muted);
+}
+
+.privacy-note summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.import-progress-actions,
+.status-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(194, 105, 28, 0.18);
+  border-radius: 14px;
+  background: rgba(194, 105, 28, 0.08);
+  color: var(--accent-deep);
+}
+
+.status-hint {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.text-button {
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.section-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-title span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.page-sorter-empty,
+.empty-state {
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(216, 206, 188, 0.24);
+  color: var(--muted);
+}
+
+.page-sorter-list,
+.work-list {
+  display: grid;
+  gap: 14px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.page-sorter-item,
+.work-list-item {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid rgba(216, 206, 188, 0.9);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.page-sorter-item {
+  grid-template-columns: 84px minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.page-sorter-preview {
+  width: 84px;
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(216, 206, 188, 0.35);
+}
+
+.page-sorter-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.page-sorter-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.page-sorter-copy span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.page-sorter-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    border-color 120ms ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(194, 105, 28, 0.18);
+}
+
+.primary-button:hover,
+.secondary-button:hover,
+.ghost-button:hover {
+  transform: translateY(-1px);
+}
+
+:where(button, a, input, select, summary):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
+  outline-offset: 3px;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+  min-height: 40px;
+}
+
+a.primary-button,
+a.secondary-button,
+a.ghost-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primary-button {
+  padding: 13px 20px;
+  border: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+  color: #fffaf4;
+  box-shadow: 0 12px 22px rgba(154, 78, 20, 0.2);
+}
+
+.secondary-button,
+.ghost-button {
+  padding: 9px 14px;
+  border: 1px solid var(--accent-line);
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: var(--shadow-xs);
+}
+
+.secondary-button:hover,
+.ghost-button:hover {
+  border-color: var(--accent);
+  background: #fffefb;
+}
+
+.danger-button {
+  color: var(--danger);
+  border-color: rgba(163, 49, 31, 0.22);
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.ghost-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.inline-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.95rem;
+}
+
+.work-list-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.work-main {
+  min-width: 0;
+}
+
+.work-main > strong {
+  display: block;
+  overflow: hidden;
+  font-size: 1.03rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.work-progress,
+.work-last-practiced {
+  font-size: 0.86rem;
+}
+
+.work-list-item[data-status="processing"] {
+  border-color: rgba(194, 105, 28, 0.34);
+}
+
+.work-list-item[data-status="failed"] {
+  border-color: rgba(163, 49, 31, 0.26);
+}
+
+.work-list-item p {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.work-meta {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.work-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delete-confirmation {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid rgba(163, 49, 31, 0.18);
+  border-radius: 14px;
+  background: rgba(163, 49, 31, 0.06);
+  color: var(--danger);
+  font-size: 0.84rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.status-ready {
+  background: rgba(61, 122, 76, 0.14);
+  color: #275636;
+}
+
+.status-processing {
+  background: rgba(194, 105, 28, 0.14);
+  color: var(--accent-deep);
+}
+
+.status-failed {
+  background: rgba(163, 49, 31, 0.14);
+  color: var(--danger);
+}
+
+.practice-layout {
+  display: grid;
+  gap: 12px;
+  width: min(1760px, 100%);
+  margin: 0 auto;
+}
+
+.practice-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.practice-breadcrumb .ghost-button {
+  text-decoration: none;
+}
+
+.practice-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+  gap: 24px;
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at top right, rgba(194, 105, 28, 0.1), transparent 36%),
+    var(--card);
+  box-shadow: var(--shadow-md);
+}
+
+.practice-hero-tools {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(216, 206, 188, 0.72);
+}
+
+.hero-page-status {
+  display: grid;
+  gap: 3px;
+  min-width: 150px;
+}
+
+.hero-page-status span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+}
+
+.hero-page-status strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.practice-hero-tools .toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-hero-tools .keyboard-shortcuts-hint {
+  grid-column: 1 / -1;
+  padding-top: 10px;
+}
+
+.practice-hero-tools > .inline-error {
+  grid-column: 1 / -1;
+}
+
+.practice-hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.95;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.hero-stats div {
+  padding: 16px;
+  border: 1px solid rgba(216, 206, 188, 0.9);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.hero-stats dt {
+  color: var(--muted);
+  font-size: 0.84rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.hero-stats dd {
+  margin: 10px 0 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.practice-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.45fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.practice-column {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+.practice-grid > .practice-column:last-child {
+  position: static;
+}
+
+.instrument-reference-zone {
+  min-width: 0;
+  position: static;
+}
+
+.practice-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.practice-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 18px;
+  padding: 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+.practice-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  min-width: 0;
+}
+
+.practice-heading h1 {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.65rem;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.practice-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.practice-meta .status-pill {
+  padding: 4px 8px;
+}
+
+.practice-rerun-button {
+  justify-self: end;
+}
+
+.practice-header > .inline-error,
+.practice-header > .practice-recognition-status,
+.practice-header > .metronome-bar {
+  grid-column: 1 / -1;
+}
+
+.practice-workbench {
+  display: grid;
+  grid-template-columns: minmax(600px, 3fr) minmax(420px, 2fr);
+  align-items: stretch;
+  gap: 12px;
+  /* Baseline height both columns aim for. The instrument panel is NEVER
+     clipped — it shows its full content and grows the row past this baseline
+     when needed (e.g. the guitar fretboard). The score column then stretches
+     to the same height and scrolls its sheet internally, so both bottoms
+     always align without ever hiding strings/keys. */
+  --workbench-h: clamp(460px, calc(100vh - 150px), 940px);
+}
+
+.score-workspace,
+.instrument-workbench {
+  min-width: 0;
+}
+
+/* Score column stretches to the row height (driven by the instrument). Its
+   card is taken out of flow (absolute) so the tall sheet content can't inflate
+   the row — the sheet scrolls inside instead. */
+.score-workspace {
+  position: relative;
+  min-height: var(--workbench-h);
+}
+
+.score-workspace > .score-card:first-child {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Broken-import fallback: error card + score view stack in normal flow. */
+.score-workspace > .score-card:not(:first-child) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.instrument-workbench {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  /* Grow to fit the reference instrument fully; the baseline keeps a short
+     keyboard from collapsing. Drives the shared row height. */
+  min-height: var(--workbench-h);
+  overscroll-behavior: contain;
+}
+
+/* The reference zone (keyboard / fretboard) grows to fill the column so its
+   bottom aligns with the score card, instead of leaving an empty block. */
+.instrument-reference-zone {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.instrument-reference-zone > .instrument-reference-stack {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.instrument-reference-stack > .keyboard-card,
+.instrument-reference-stack > .guitar-card {
+  min-height: 100%;
+}
+
+/* Piano is different from guitar: the keyboard is naturally short and wide, so
+   stretching its card to match the tall score just strands it in whitespace.
+   Instead let the piano column keep its natural height and stick in view while
+   the score scrolls. (Guitar keeps the stretch-to-match rules above — its
+   fretboard is naturally tall, so filling the column looks intentional.) */
+.instrument-workbench:has(.keyboard-card) {
+  align-self: start;
+  min-height: 0;
+  position: sticky;
+  top: 12px;
+}
+
+.instrument-workbench:has(.keyboard-card) .instrument-reference-zone {
+  display: flex;
+  flex-direction: column;
+}
+
+.instrument-reference-stack > .keyboard-card {
+  min-height: 0;
+}
+
+.page-status-card {
+  padding: 18px 20px;
+}
+
+.keyboard-shortcuts-hint {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid rgba(216, 206, 188, 0.68);
+}
+
+.session-tools-card {
+  display: grid;
+  gap: 16px;
+  padding: 18px 22px;
+  background: rgba(255, 253, 247, 0.82);
+}
+
+.session-tools-card .section-title {
+  align-items: end;
+}
+
+.session-tools-card .section-title h2 {
+  font-size: 1.35rem;
+}
+
+.session-tools-card .eyebrow {
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+}
+
+.session-tools-grid {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.35fr) auto minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.compact-field {
+  min-width: 112px;
+}
+
+.compact-field input,
+.loop-controls select {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid rgba(107, 93, 73, 0.25);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  font: inherit;
+}
+
+.loop-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.control-label {
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.session-toggle-button.is-active,
+.secondary-button.is-active,
+.ghost-button.is-active {
+  border-color: var(--info-line);
+  background: var(--info-soft);
+  color: var(--info-deep);
+}
+
+.metronome-settings {
+  grid-column: span 3;
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(150px, 0.55fr) minmax(260px, 1.2fr);
+  align-items: end;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(216, 206, 188, 0.78);
+  border-radius: 16px;
+  background: rgba(247, 239, 227, 0.56);
+}
+
+.metronome-volume-control,
+.metronome-meter-control,
+.metronome-pattern-control,
+.guitar-tuning-preset {
+  display: grid;
+  gap: 6px;
+}
+
+.metronome-volume-control > span,
+.metronome-meter-control > span,
+.metronome-pattern-control > .control-label,
+.guitar-tuning-preset > span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.metronome-volume-control {
+  grid-template-columns: auto minmax(80px, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+}
+
+.metronome-volume-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.metronome-volume-control output {
+  min-width: 42px;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.metronome-meter-control select,
+.guitar-tuning-preset select,
+.guitar-tuning-strings select {
+  min-height: 36px;
+  padding: 6px 8px;
+  border: 1px solid rgba(107, 93, 73, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.metronome-beats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.metronome-beat {
+  display: inline-grid;
+  place-items: center;
+  min-width: 48px;
+  min-height: 42px;
+  padding: 4px 6px;
+  border: 1px solid rgba(104, 77, 46, 0.18);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.metronome-beat strong {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.metronome-beat span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.1;
+}
+
+.metronome-beat.is-strong {
+  border-color: rgba(194, 105, 28, 0.54);
+  background: rgba(255, 229, 196, 0.95);
+}
+
+.metronome-beat.is-accent {
+  border-color: rgba(214, 122, 24, 0.4);
+  background: rgba(255, 243, 220, 0.94);
+}
+
+.metronome-beat.is-silent {
+  opacity: 0.58;
+  background: rgba(235, 230, 221, 0.72);
+}
+
+.session-tools-hint {
+  margin: 0;
+}
+
+.metronome-tick .session-toggle-button.is-active {
+  box-shadow: 0 0 0 4px rgba(194, 105, 28, 0.18);
+}
+
+.instrument-controls-card {
+  display: grid;
+  gap: 16px;
+}
+
+.instrument-controls {
+  display: grid;
+  gap: 14px;
+}
+
+.metronome-bar {
+  display: grid;
+  grid-template-columns: auto minmax(150px, 0.55fr) minmax(220px, 1fr) minmax(100px, 0.4fr) minmax(260px, 1.1fr);
+  align-items: end;
+  gap: 14px 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+/* Every cell shares one skeleton: a label line on top + a control row of --control-h,
+   so all labels sit on one baseline and all controls on one baseline. */
+.metronome-bar-heading,
+.metronome-compact-control,
+.metronome-bar .metronome-pattern-control {
+  display: grid;
+  grid-template-rows: var(--label-line) var(--control-h);
+  align-content: end;
+  gap: 6px;
+}
+
+.metronome-bar-heading {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+}
+
+.metronome-bar-heading h2 {
+  margin: 0;
+  align-self: end;
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: var(--label-line);
+}
+
+.metronome-bar .session-toggle-button {
+  align-self: stretch;
+  min-height: var(--control-h);
+  padding: 7px 14px;
+}
+
+.metronome-compact-control > span,
+.metronome-bar .control-label {
+  align-self: end;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: var(--label-line);
+}
+
+.metronome-tempo-control {
+  grid-template-columns: minmax(72px, 1fr) auto;
+  grid-template-rows: var(--label-line) var(--control-h);
+  align-items: center;
+}
+
+.metronome-tempo-control > span {
+  grid-column: 1 / -1;
+}
+
+.metronome-tempo-control input,
+.metronome-bar .metronome-meter-control select {
+  min-width: 0;
+  height: var(--control-h);
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+}
+
+.metronome-tempo-control small {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.metronome-bar .metronome-volume-control {
+  grid-template-columns: minmax(90px, 1fr) auto;
+  grid-template-rows: var(--label-line) var(--control-h);
+  align-items: center;
+  column-gap: 10px;
+}
+
+.metronome-bar .metronome-volume-control > span {
+  grid-column: 1 / -1;
+}
+
+.metronome-bar .metronome-volume-control output {
+  min-width: 38px;
+}
+
+.metronome-bar .metronome-beats {
+  align-self: center;
+  flex-wrap: wrap;
+}
+
+.metronome-bar .metronome-beat {
+  min-width: 40px;
+  min-height: var(--control-h);
+  padding: 3px 5px;
+  border-radius: var(--radius-xs);
+}
+
+.instrument-controls-panel {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-xs);
+}
+
+/* The instrument selector belongs to the reference display, so it is a
+   toolbar-like header rather than another card competing with the keyboard or
+   fretboard for attention. */
+.instrument-controls-inline {
+  gap: 10px;
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.instrument-controls-inline .mode-toggle {
+  justify-self: start;
+}
+
+.instrument-controls-inline .instrument-primary-controls .mode-toggle {
+  flex: 0 1 auto;
+}
+
+.instrument-primary-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px 22px;
+}
+
+.playback-controls {
+  display: grid;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Playback is rendered in the score toolbar. Keep the existing component
+   semantics, but remove the standalone card chrome in this placement. */
+.playback-controls-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.playback-controls-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.playback-controls-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.playback-controls-buttons .session-toggle-button {
+  min-width: 84px;
+}
+
+.instrument-primary-controls .mode-toggle {
+  flex: 1 1 190px;
+}
+
+.guitar-setup-details {
+  border-top: 1px solid var(--line);
+}
+
+.guitar-setup-details > summary {
+  padding: 14px 2px 4px;
+  color: var(--info-deep);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.guitar-setup-content {
+  display: grid;
+  gap: 14px;
+  padding-top: 14px;
+}
+
+.guitar-setup-content .guitar-tuning-editor,
+.guitar-setup-content .guitar-tuner {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.guitar-tuning-editor {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+
+.guitar-tuning-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.guitar-tuning-preset {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.guitar-tuning-preset > span {
+  white-space: nowrap;
+}
+
+.guitar-tuning-strings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.guitar-tuning-strings label {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.guitar-tuner-details {
+  overflow: hidden;
+  border: 1px solid rgba(28, 91, 128, 0.2);
+  border-radius: 16px;
+  background: rgba(236, 247, 251, 0.58);
+}
+
+.guitar-tuner-details > summary {
+  padding: 11px 12px;
+  color: #164864;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.guitar-tuner-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.guitar-tuner-details > summary::after {
+  content: "+";
+  float: right;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.guitar-tuner-details[open] > summary {
+  border-bottom: 1px solid rgba(28, 91, 128, 0.16);
+}
+
+.guitar-tuner-details[open] > summary::after {
+  content: "−";
+}
+
+.guitar-tuner {
+  display: grid;
+  gap: 18px;
+  padding: 18px;
+}
+
+.guitar-tuner-heading,
+.guitar-tuner-reading,
+.guitar-tuner-meter-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guitar-tuner-heading strong {
+  font-size: 0.94rem;
+}
+
+.guitar-tuner-heading p {
+  margin: 4px 0 0;
+  font-size: 0.74rem;
+}
+
+.guitar-tuner-heading .secondary-button {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+}
+
+.guitar-tuner-strings {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.guitar-tuner-string {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 4px;
+  border: 1px solid var(--info-line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  color: var(--info-deep);
+  font: inherit;
+  cursor: pointer;
+}
+
+.guitar-tuner-string strong {
+  font-size: 0.72rem;
+}
+
+.guitar-tuner-string span {
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guitar-tuner-string.is-selected {
+  border-color: rgba(28, 91, 128, 0.62);
+  background: rgba(191, 226, 239, 0.82);
+  box-shadow: 0 0 0 2px rgba(28, 91, 128, 0.1);
+}
+
+.guitar-tuner-reading {
+  align-items: stretch;
+}
+
+.guitar-tuner-target,
+.guitar-tuner-state,
+.guitar-tuner-detected {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+}
+
+.guitar-tuner-target > span,
+.guitar-tuner-detected > span {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.guitar-tuner-target strong,
+.guitar-tuner-detected strong {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.guitar-tuner-target small,
+.guitar-tuner-detected small,
+.guitar-tuner-state span {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.guitar-tuner-state {
+  flex: 1 1 auto;
+  place-items: center;
+  text-align: center;
+}
+
+.guitar-tuner-state strong {
+  font-size: 1rem;
+}
+
+.guitar-tuner-state.is-in-tune {
+  background: rgba(219, 241, 220, 0.84);
+  color: #246137;
+}
+
+.guitar-tuner-state.is-flat {
+  background: rgba(255, 237, 210, 0.9);
+  color: #8e4c0d;
+}
+
+.guitar-tuner-state.is-sharp {
+  background: rgba(224, 236, 248, 0.9);
+  color: #164864;
+}
+
+.guitar-tuner-meter {
+  display: grid;
+  gap: 5px;
+}
+
+.guitar-tuner-meter-track {
+  position: relative;
+  display: block;
+  height: 9px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e9b66f 0%, #d8e8c8 43%, #5eae72 50%, #d8e8c8 57%, #a6c4dc 100%);
+}
+
+.guitar-tuner-meter-marker,
+.guitar-tuner-meter-center {
+  position: absolute;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.guitar-tuner-meter-marker {
+  background: #26343c;
+  box-shadow: 0 0 0 3px rgba(38, 52, 60, 0.14);
+  transition: left 120ms ease;
+}
+
+.guitar-tuner-meter-center {
+  left: 50%;
+  width: 2px;
+  height: 22px;
+  background: #246137;
+}
+
+.guitar-tuner-meter-labels {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.mode-toggle {
+  display: grid;
+  gap: 5px;
+}
+
+.mode-toggle-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.mode-toggle-buttons {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.mode-toggle-button {
+  min-height: var(--control-h);
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-xs);
+  background: var(--surface-raised);
+  color: var(--muted);
+  font-weight: 600;
+  transition:
+    border-color 120ms ease,
+    background-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.mode-toggle-button.is-active {
+  border-color: var(--info-line);
+  background: var(--info-soft);
+  color: var(--info-deep);
+  box-shadow: 0 0 0 1px var(--info-line);
+}
+
+.practice-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-muted {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.score-stage {
+  margin-top: 12px;
+  overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  overscroll-behavior: contain;
+  overflow-anchor: none;
+}
+
+.score-card {
+  padding: 12px;
+}
+
+.score-card .practice-toolbar .secondary-button,
+.score-card .practice-toolbar .ghost-button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: var(--radius-xs);
+  font-size: 1.05rem;
+}
+
+.score-card .practice-toolbar .playback-controls-inline .secondary-button,
+.score-card .practice-toolbar .playback-controls-inline .ghost-button {
+  width: auto;
+  min-width: 64px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+}
+
+.score-card .practice-toolbar [aria-label="重置缩放"] {
+  width: auto;
+  min-width: 54px;
+  padding: 0 8px;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-navigation {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--surface-sunken);
+}
+
+.score-navigation-row,
+.score-step-buttons,
+.score-position {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.score-navigation-row {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.score-step-buttons > button {
+  min-height: 44px;
+  border-radius: var(--radius-xs);
+  font-size: 0.88rem;
+}
+
+.score-position {
+  gap: 12px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-position > span,
+.score-shortcuts {
+  color: var(--muted);
+}
+
+.score-progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border: none;
+  border-radius: 4px;
+  overflow: hidden;
+  accent-color: var(--accent);
+  background: var(--line);
+}
+
+.score-progress::-webkit-progress-bar { background: var(--line); }
+.score-progress::-webkit-progress-value { background: var(--accent); }
+.score-progress::-moz-progress-bar { background: var(--accent); }
+
+.score-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.practice-recognition-status {
+  margin: 0;
+  color: var(--info-deep);
+  font-size: 0.9rem;
+}
+
+.score-canvas {
+  position: relative;
+  margin: 0 auto;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.score-canvas img {
+  display: block;
+}
+
+.score-hotspot {
+  position: absolute;
+  border: 2px solid rgba(154, 78, 20, 0.42);
+  border-radius: 10px;
+  background: rgba(194, 105, 28, 0.14);
+}
+
+.score-hotspot.is-selected {
+  border-color: rgba(28, 91, 128, 0.88);
+  background: rgba(28, 91, 128, 0.2);
+  box-shadow: 0 0 0 3px rgba(28, 91, 128, 0.18);
+}
+
+.score-hotspot.is-preview {
+  border-color: rgba(28, 91, 128, 0.84);
+  border-style: dashed;
+  background: rgba(219, 239, 249, 0.52);
+  box-shadow: 0 0 0 3px rgba(28, 91, 128, 0.12);
+}
+
+.score-hotspot.is-low-confidence {
+  border-style: dashed;
+  border-color: rgba(163, 49, 31, 0.78);
+  background: rgba(163, 49, 31, 0.12);
+}
+
+.score-hotspot.is-difficult {
+  border-style: dotted;
+  border-color: rgba(214, 122, 24, 0.95);
+  background: rgba(214, 122, 24, 0.16);
+  box-shadow: 0 0 0 2px rgba(214, 122, 24, 0.14);
+}
+
+.musicxml-stage {
+  display: grid;
+  gap: 12px;
+}
+
+.musicxml-sheet-frame {
+  position: relative;
+}
+
+.musicxml-sheet-host {
+  position: relative;
+  overflow-x: auto;
+  min-height: 240px;
+  padding: 16px 14px 40px;
+  border-radius: var(--radius-sm);
+  background: var(--sheet-paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-xs);
+}
+
+.musicxml-sheet-canvas svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.musicxml-inline-guide-anchor {
+  position: absolute;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.musicxml-inline-guitar-guide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 252, 245, 0.96);
+  border: 1px solid rgba(104, 77, 46, 0.16);
+  box-shadow: 0 10px 24px rgba(39, 28, 12, 0.12);
+  pointer-events: auto;
+}
+
+.musicxml-inline-guitar-label {
+  flex: 0 0 auto;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #5f4731;
+}
+
+.musicxml-inline-guitar-strip {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.musicxml-inline-guitar-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.musicxml-inline-guitar-pill,
+.musicxml-inline-guitar-empty {
+  flex: 0 0 auto;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(104, 77, 46, 0.12);
+  color: #4e3d2b;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Inline guide pill picks up the same per-note swatch as the fretboard marker
+   and the piano key, so a player can trace one note across all three. */
+.musicxml-inline-guitar-pill[data-note-color] {
+  border-color: color-mix(in srgb, var(--note-accent) 45%, transparent);
+  background: color-mix(in srgb, var(--note-accent) 14%, #fff);
+  color: var(--note-accent);
+}
+
+.musicxml-click-target {
+  cursor: pointer;
+}
+
+.musicxml-click-target:focus-visible {
+  outline: none;
+}
+
+.musicxml-click-target:focus-visible path {
+  stroke: rgba(28, 91, 128, 0.9);
+  stroke-width: 2px;
+}
+
+.musicxml-click-target.musicxml-click-target-difficult path,
+.musicxml-click-target.musicxml-click-target-difficult ellipse,
+.musicxml-click-target.musicxml-click-target-difficult rect,
+.musicxml-click-target.musicxml-click-target-difficult polygon,
+.musicxml-click-target.musicxml-click-target-difficult line {
+  stroke: #d67a18;
+  stroke-width: 1.6px;
+  stroke-dasharray: 2 2;
+}
+
+.musicxml-click-target.musicxml-click-target-active[data-note-color],
+.musicxml-click-target.musicxml-click-target-active[data-note-color] *,
+.musicxml-click-target.musicxml-click-target-active [data-note-color],
+.musicxml-click-target.musicxml-click-target-active [data-note-color] * {
+  fill: var(--note-fill, #c55a11);
+  stroke: var(--note-fill, #c55a11);
+  stroke-width: 1.6px;
+}
+
+.musicxml-click-target.musicxml-click-target-active [data-note-role="current"]:not([data-note-color]),
+.musicxml-click-target.musicxml-click-target-active [data-note-role="current"]:not([data-note-color]) * {
+  fill: var(--note-fill-0);
+  stroke: var(--note-fill-0);
+  stroke-width: 1.6px;
+}
+
+.musicxml-click-target.musicxml-click-target-preview[data-note-color],
+.musicxml-click-target.musicxml-click-target-preview[data-note-color] *,
+.musicxml-click-target.musicxml-click-target-preview [data-note-color],
+.musicxml-click-target.musicxml-click-target-preview [data-note-color] * {
+  fill: color-mix(in srgb, var(--note-fill, #c55a11) 24%, var(--sheet-paper));
+  stroke: var(--note-fill, #c55a11);
+  stroke-width: 1.8px;
+  stroke-dasharray: 3 2;
+}
+
+.musicxml-click-target.musicxml-click-target-preview [data-note-role="preview"]:not([data-note-color]),
+.musicxml-click-target.musicxml-click-target-preview [data-note-role="preview"]:not([data-note-color]) * {
+  fill: color-mix(in srgb, var(--note-fill-0) 24%, var(--sheet-paper));
+  stroke: var(--note-fill-0);
+  stroke-width: 1.8px;
+  stroke-dasharray: 3 2;
+}
+
+.musicxml-click-target:focus-visible {
+  filter:
+    drop-shadow(0 0 1px var(--focus))
+    drop-shadow(0 0 2px var(--focus));
+}
+
+.section-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.section-stack + .section-stack {
+  margin-top: 26px;
+}
+
+.theory-card {
+  padding: 0;
+  overflow: clip;
+}
+
+.inspector-details {
+  width: 100%;
+}
+
+.inspector-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 22px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.inspector-summary .eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.inspector-summary strong {
+  font-size: 1.2rem;
+}
+
+.inspector-summary-hint {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.theory-panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  align-items: start;
+  gap: 14px;
+  padding: 20px 22px 22px;
+  border-top: 1px solid rgba(216, 206, 188, 0.72);
+}
+
+.theory-panel-grid > .section-stack {
+  min-width: 0;
+  margin: 0;
+  padding: 16px;
+  border: 1px solid rgba(216, 206, 188, 0.78);
+  border-radius: 18px;
+  background: rgba(247, 239, 227, 0.52);
+}
+
+.theory-panel-grid > .section-stack + .section-stack {
+  margin-top: 0;
+}
+
+.theory-panel-grid > .section-stack > h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.theory-panel-grid .theory-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.theory-panel-grid .theory-list li {
+  min-width: 0;
+  padding: 10px;
+  overflow-wrap: anywhere;
+}
+
+.object-editor-card {
+  gap: 14px;
+}
+
+.editor-help,
+.editor-dirty-state {
+  margin: 0;
+}
+
+.note-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.note-chip {
+  display: inline-flex;
+  padding: 7px 10px;
+  border: 1px solid var(--info-line);
+  border-radius: var(--radius-pill);
+  background: var(--info-soft);
+  color: var(--info-deep);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.info-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(216, 206, 188, 0.9);
+}
+
+.info-card p {
+  margin: 0;
+}
+
+.theory-line {
+  margin: 0;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(216, 206, 188, 0.9);
+  line-height: 1.6;
+}
+
+.theory-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.theory-list li {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(216, 206, 188, 0.9);
+}
+
+.keyboard-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 20px;
+  position: sticky;
+  bottom: auto;
+  z-index: 1;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Center the keyboard within the (often taller) card so it never strands at
+   the top with an empty gap below. */
+.keyboard-card > .keyboard-scroll-shell {
+  align-self: center;
+  width: 100%;
+}
+
+.instrument-reference-stack {
+  position: static;
+  display: grid;
+  gap: 8px;
+}
+
+.instrument-note-summary {
+  display: grid;
+  justify-items: end;
+  gap: 3px;
+  min-width: 0;
+  text-align: right;
+}
+
+/* Current-note names in the card header, each tinted with its own swatch so the
+   header doubles as the legend tying a name to its key/marker color. */
+.instrument-note-list {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 6px;
+}
+
+.instrument-note-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--note-accent, var(--ink));
+}
+
+.instrument-note-chip::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--note-accent, var(--muted));
+}
+
+/* A "next" chip inside the preview label: hollow dot to echo the hollow key. */
+.instrument-preview-label .instrument-note-chip::before {
+  background: transparent;
+  border: 1.5px solid var(--note-accent, currentColor);
+}
+
+.instrument-preview-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 9px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.instrument-preview-label .instrument-preview-caption {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.instrument-reference-stack .keyboard-card {
+  position: static;
+}
+
+.guitar-card {
+  display: grid;
+  gap: 20px;
+  position: static;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+}
+
+.guitar-guidance-group {
+  display: grid;
+  gap: 8px;
+}
+
+.guitar-guidance-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 16px;
+}
+
+.guitar-guidance-label {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.guitar-guidance-group.is-preview .guitar-guidance-label {
+  color: #164864;
+}
+
+.guitar-recommended-board {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.guitar-summary-note {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.guitar-compact-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Resolve a per-note swatch from the palette. Every element that represents a
+   specific note carries `data-note-color="0..5"`; these map the index onto the
+   local `--note-fill` / `--note-accent` used by the rules below. */
+[data-note-color="0"] { --note-fill: var(--note-fill-0); --note-accent: var(--note-accent-0); }
+[data-note-color="1"] { --note-fill: var(--note-fill-1); --note-accent: var(--note-accent-1); }
+[data-note-color="2"] { --note-fill: var(--note-fill-2); --note-accent: var(--note-accent-2); }
+[data-note-color="3"] { --note-fill: var(--note-fill-3); --note-accent: var(--note-accent-3); }
+[data-note-color="4"] { --note-fill: var(--note-fill-4); --note-accent: var(--note-accent-4); }
+[data-note-color="5"] { --note-fill: var(--note-fill-5); --note-accent: var(--note-accent-5); }
+
+.guitar-compact-pill {
+  display: grid;
+  gap: 2px;
+  min-width: 118px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--note-accent, var(--line-strong)) 45%, transparent);
+  background: color-mix(in srgb, var(--note-accent, var(--muted)) 12%, var(--card));
+}
+
+.guitar-compact-pill strong {
+  font-size: 0.95rem;
+  color: var(--note-accent, var(--ink));
+}
+
+.guitar-compact-pill span {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+/* Preview ("next") pill: same note color, but outlined + dashed so current vs.
+   next reads at a glance. Colored dot marks it as the same swatch family. */
+.guitar-compact-pill.is-preview {
+  background: var(--card);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--note-accent, var(--info)) 62%, transparent);
+}
+
+.guitar-expand-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.guitar-fretboard-shell {
+  overflow-x: auto;
+  padding-bottom: 4px;
+  overscroll-behavior-x: contain;
+}
+
+.guitar-fretboard-grid {
+  display: grid;
+  grid-template-columns: 76px repeat(13, minmax(44px, 1fr));
+  gap: 0;
+  min-width: 760px;
+  border: 1px solid #b5a38c;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #f3e3cc;
+}
+
+.guitar-fretboard-corner,
+.guitar-fret-number {
+  min-height: 36px;
+  border-bottom: 1px solid #c9b8a1;
+}
+
+.guitar-fretboard-corner {
+  border-right: 1px solid #c9b8a1;
+  background: #f7efe3;
+}
+
+.guitar-fret-number {
+  display: grid;
+  place-items: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #5e503f;
+  border-right: 2px solid #8a7760;
+  background: #f7efe3;
+}
+
+.guitar-fret-number[data-fret="0"] {
+  border-right: 4px solid #574733;
+}
+
+.guitar-string-label {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  min-height: 40px;
+  padding: 4px;
+  border-right: 1px solid #c9b8a1;
+  border-bottom: 1px solid rgba(201, 184, 161, 0.7);
+  background: #f5ecdd;
+  color: #574733;
+}
+
+.guitar-string-label span {
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.guitar-string-label small {
+  font-size: 0.64rem;
+  color: var(--muted);
+}
+
+.guitar-fret-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  position: relative;
+  min-height: 40px;
+  border-right: 2px solid #8a7760;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(196, 151, 94, 0.08));
+}
+
+.guitar-fret-cell[data-fret="0"] {
+  border-right: 4px solid #574733;
+  background: #faf5ea;
+}
+
+.guitar-fret-cell[data-string-number="1"] {
+  --guitar-string-thickness: 1px;
+}
+
+.guitar-fret-cell[data-string-number="2"] {
+  --guitar-string-thickness: 1.25px;
+}
+
+.guitar-fret-cell[data-string-number="3"] {
+  --guitar-string-thickness: 1.5px;
+}
+
+.guitar-fret-cell[data-string-number="4"] {
+  --guitar-string-thickness: 2px;
+}
+
+.guitar-fret-cell[data-string-number="5"] {
+  --guitar-string-thickness: 2.5px;
+}
+
+.guitar-fret-cell[data-string-number="6"] {
+  --guitar-string-thickness: 3px;
+}
+
+.guitar-fret-cell::before {
+  position: absolute;
+  inset-inline: 0;
+  top: 50%;
+  height: var(--guitar-string-thickness, 1px);
+  transform: translateY(-50%);
+  border-radius: 999px;
+  background: #695a48;
+  content: "";
+  pointer-events: none;
+}
+
+.guitar-fret-marker {
+  position: relative;
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0 4px;
+  border-radius: 999px;
+  /* Current note: solid per-note fill (falls back to ink if a marker somehow
+     has no assigned color). Physical fretboard never darkens, so light text. */
+  background: var(--note-fill, rgba(36, 42, 59, 0.86));
+  color: #fff8ea;
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 6px 14px rgba(39, 28, 12, 0.16);
+}
+
+/* Preview ("next") note: hollow with a high-contrast dashed border so the
+   state reads instantly — dashed = next, solid = now. Note identity is still
+   carried by the colored text inside. */
+.guitar-fret-marker.is-preview {
+  border: 3px dashed var(--preview-outline-on-light);
+  background: #fffdf8;
+  color: color-mix(in srgb, var(--note-fill, #164864) 78%, #2b2118);
+  box-shadow: none;
+}
+
+.page-status-card,
+.object-editor-card {
+  display: grid;
+  gap: 16px;
+}
+
+.keyboard-scroll-shell {
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  scroll-behavior: smooth;
+}
+
+.keyboard-scroll-shell::-webkit-scrollbar {
+  display: none;
+}
+
+.keyboard-stage {
+  position: relative;
+  --white-key-width: 34px;
+  --white-key-height: 158px;
+  --black-key-height: 96px;
+  --keyboard-stage-padding-top: 8px;
+  --keyboard-stage-padding-bottom: 12px;
+  /* Size the dark stage to exactly wrap the keys and center it, so a short
+     key range never leaves an empty black strip on the right. When the range
+     is wide enough to overflow, the scroll-shell scrolls instead. */
+  width: calc(var(--white-key-width) * var(--white-key-count) + 20px);
+  margin-inline: auto;
+  padding: var(--keyboard-stage-padding-top) 10px var(--keyboard-stage-padding-bottom);
+  border-radius: 20px;
+  background: linear-gradient(180deg, #2f2a24 0%, #191612 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.keyboard-white-row {
+  display: flex;
+  align-items: flex-start;
+  height: var(--white-key-height);
+}
+
+.keyboard-black-row {
+  position: absolute;
+  inset: var(--keyboard-stage-padding-top) 10px auto 10px;
+  height: var(--black-key-height);
+  pointer-events: none;
+}
+
+.piano-key {
+  display: block;
+  position: relative;
+  padding: 0;
+  font-size: 0.72rem;
+  pointer-events: none;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.piano-key-label {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  font-size: 0.58rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.piano-key-white {
+  flex: 0 0 var(--white-key-width);
+  width: var(--white-key-width);
+  height: var(--white-key-height);
+  border: 1px solid rgba(25, 23, 20, 0.72);
+  border-right-width: 0;
+  border-radius: 0 0 9px 9px;
+  background: linear-gradient(180deg, #fffdfa 0%, #f6f2ea 72%, #e7dece 100%);
+  color: #4d4136;
+  box-shadow: inset 0 -8px 14px rgba(78, 59, 33, 0.1);
+}
+
+.piano-key-white:last-child {
+  border-right-width: 1px;
+}
+
+.piano-key-white.is-active {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--note-fill, #f7c968) 34%, #fffdfa) 0%,
+    color-mix(in srgb, var(--note-fill, #f7c968) 70%, #fff) 60%,
+    var(--note-fill, #eca545) 100%
+  );
+  color: #fff8ec;
+  box-shadow:
+    inset 0 -8px 14px color-mix(in srgb, var(--note-fill, rgba(125, 67, 12, 1)) 30%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--note-fill, rgba(255, 188, 68, 1)) 42%, transparent);
+}
+
+.piano-key-white.is-active .piano-key-label {
+  text-shadow: 0 1px 2px rgba(23, 15, 6, 0.5);
+}
+
+.piano-key.is-repeat-preview {
+  outline: 2px dashed var(--note-fill, rgba(28, 91, 128, 0.9));
+  outline-offset: -5px;
+}
+
+.piano-key.is-repeat-preview::after {
+  position: absolute;
+  right: 4px;
+  bottom: 26px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 2px;
+  border-radius: 999px;
+  background: var(--note-fill, #164864);
+  color: #f3fbff;
+  content: "再";
+  font-size: 0.54rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Preview ("next") white key: pale tint + high-contrast dark dashed outline.
+   Dashed = next, solid = now. Tint still carries the note colour; dark outline
+   reads clearly against the cream background in both light and dark mode. */
+.piano-key-white.is-preview {
+  background: linear-gradient(
+    180deg,
+    #fffdfa 0%,
+    color-mix(in srgb, var(--note-fill, #b9ddea) 22%, #fff) 72%,
+    color-mix(in srgb, var(--note-fill, #8cb9cb) 38%, #fff) 100%
+  );
+  color: color-mix(in srgb, var(--note-fill, #164864) 74%, #2b2118);
+  box-shadow: inset 0 -8px 14px color-mix(in srgb, var(--note-fill, rgba(28, 91, 128, 1)) 18%, transparent);
+  outline: 3px dashed var(--preview-outline-on-light);
+  outline-offset: -3px;
+}
+
+.piano-key-black {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  width: calc(var(--white-key-width) * 0.64);
+  height: var(--black-key-height);
+  border: 1px solid rgba(0, 0, 0, 0.88);
+  border-radius: 0 0 9px 9px;
+  background: linear-gradient(180deg, #2d2d2d 0%, #0f0f0f 82%, #000 100%);
+  color: #f6efe0;
+  box-shadow:
+    0 8px 12px rgba(0, 0, 0, 0.28),
+    inset 0 -4px 8px rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+}
+
+.piano-key-black .piano-key-label {
+  bottom: 6px;
+  color: inherit;
+}
+
+.piano-key-black.is-active {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--note-fill, #db7b1d) 82%, #fff) 0%,
+    var(--note-fill, #db7b1d) 76%,
+    color-mix(in srgb, var(--note-fill, #9b4f08) 74%, #000) 100%
+  );
+  color: #fff8ec;
+  box-shadow:
+    0 10px 14px color-mix(in srgb, var(--note-fill, rgba(102, 47, 0, 1)) 34%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--note-fill, rgba(255, 188, 68, 1)) 40%, transparent);
+}
+
+.piano-key-black.is-repeat-preview::after {
+  right: 50%;
+  bottom: 22px;
+  transform: translateX(50%);
+}
+
+/* Preview ("next") black key: darker body with a high-contrast light dashed
+   outline — dashed = next, solid = now. Light outline reads clearly against
+   the dark key in both light and dark mode. */
+.piano-key-black.is-preview {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--note-fill, #5d91a6) 40%, #2d2d2d) 0%,
+    color-mix(in srgb, var(--note-fill, #2d6078) 34%, #131313) 76%,
+    #0c0c0c 100%
+  );
+  color: #f6efe0;
+  box-shadow: 0 10px 14px rgba(0, 0, 0, 0.3);
+  outline: 3px dashed var(--preview-outline-on-dark);
+  outline-offset: -3px;
+}
+
+@media (max-width: 1180px) {
+  .practice-workbench {
+    grid-template-columns: 1fr;
+  }
+
+  /* Single column: let both stacks take their natural height instead of the
+     shared two-column height. */
+  .score-workspace {
+    height: auto;
+    min-height: 0;
+  }
+
+  .score-workspace > .score-card:first-child {
+    position: static;
+  }
+
+  .score-stage {
+    flex: 0 1 auto;
+    max-height: 50svh;
+  }
+
+  .instrument-workbench {
+    position: static;
+    height: auto;
+    max-height: none;
+    min-height: 0;
+    grid-template-rows: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 1120px) {
+  .instrument-reference-zone {
+    position: static;
+  }
+
+  .session-tools-grid {
+    grid-template-columns: minmax(120px, 0.4fr) auto minmax(0, 1fr);
+  }
+}
+
+@media (max-height: 960px) {
+  .instrument-reference-zone {
+    position: static;
+  }
+}
+
+@media (max-width: 980px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-home .resume-panel,
+  .dashboard-home .works-panel,
+  .dashboard-home .import-panel-collapsible {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .practice-hero,
+  .practice-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-grid > .practice-column:last-child {
+    position: static;
+  }
+
+  .session-tools-grid {
+    grid-template-columns: minmax(120px, 0.4fr) auto minmax(260px, 1fr);
+  }
+
+  .metronome-bar {
+    grid-template-columns: auto minmax(130px, 0.6fr) minmax(200px, 1fr) minmax(90px, 0.4fr);
+  }
+
+  .metronome-bar .metronome-pattern-control {
+    grid-column: 1 / -1;
+  }
+
+  .session-tools-grid > .ghost-button {
+    justify-self: start;
+  }
+
+  .keyboard-card {
+    position: static;
+  }
+
+  .instrument-reference-stack {
+    position: static;
+  }
+
+  .instrument-reference-zone {
+    position: static;
+  }
+
+  .guitar-expand-row {
+    align-items: flex-start;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    padding: 12px 10px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .panel-card,
+  .practice-hero {
+    border-radius: 20px;
+  }
+
+  .practice-card {
+    border-radius: 8px;
+  }
+
+  .panel-card {
+    padding: 20px;
+  }
+
+  .practice-layout,
+  .practice-column,
+  .practice-grid {
+    gap: 14px;
+  }
+
+  .practice-breadcrumb {
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .practice-breadcrumb > span {
+    max-width: 45%;
+    padding-top: 8px;
+    overflow: hidden;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .practice-header {
+    grid-template-columns: 1fr;
+    padding: 14px;
+  }
+
+  .practice-rerun-button {
+    justify-self: start;
+  }
+
+  .metronome-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .metronome-bar .metronome-pattern-control {
+    grid-column: 1 / -1;
+  }
+
+  .instrument-primary-controls {
+    display: grid;
+  }
+
+  .practice-hero {
+    gap: 18px;
+    padding: 20px;
+  }
+
+  .practice-hero h1 {
+    font-size: clamp(1.9rem, 10vw, 2.7rem);
+  }
+
+  .practice-hero .lede {
+    font-size: 0.98rem;
+  }
+
+  .hero-stats {
+    gap: 8px;
+  }
+
+  .hero-stats div {
+    padding: 12px;
+  }
+
+  .session-tools-card {
+    padding: 16px;
+  }
+
+  .session-tools-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .metronome-settings {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+  }
+
+  .practice-hero-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-hero-tools .keyboard-shortcuts-hint,
+  .practice-hero-tools > .inline-error {
+    grid-column: 1;
+  }
+
+  .loop-controls {
+    grid-column: 1 / -1;
+  }
+
+  .loop-controls .secondary-button {
+    flex: 1 1 120px;
+  }
+
+  .resume-card {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .resume-action {
+    width: 100%;
+  }
+
+  .import-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 18px 20px;
+  }
+
+  .import-summary-copy {
+    display: none;
+  }
+
+  .import-panel-content {
+    padding: 0 18px 20px;
+  }
+
+  .source-selection-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .upload-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-sorter-item,
+  .work-list-item {
+    grid-template-columns: 1fr;
+  }
+
+  .page-sorter-actions,
+  .work-meta {
+    justify-content: flex-start;
+    justify-items: start;
+  }
+
+  .section-title {
+    display: grid;
+  }
+
+  .practice-toolbar {
+    gap: 10px;
+  }
+
+  .practice-toolbar .toolbar-group {
+    width: 100%;
+  }
+
+  .score-card {
+    padding: 12px;
+  }
+
+  .score-stage {
+    max-height: 50svh;
+    min-height: 180px;
+    margin-top: 14px;
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .musicxml-sheet-host {
+    min-height: 180px;
+    padding: 10px 8px 24px;
+    border-radius: 8px;
+  }
+
+  .instrument-reference-stack {
+    position: static;
+  }
+
+  .keyboard-card,
+  .guitar-card {
+    max-height: 38svh;
+    overflow: auto;
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(25, 36, 44, 0.04);
+  }
+
+  .guitar-card {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .keyboard-card .section-title h2,
+  .guitar-card .section-title h2 {
+    font-size: 1rem;
+  }
+
+  .instrument-note-summary {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .guitar-tuning-strings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guitar-tuner-strings {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .guitar-tuner-reading {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guitar-tuner-state {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .guitar-tuner-target {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .guitar-tuner-detected {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .metronome-bar .metronome-beat,
+  .mode-toggle-button,
+  .guitar-setup-details > summary {
+    min-height: 44px;
+  }
+
+  .guitar-compact-strip {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .inspector-summary {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .inspector-summary-hint {
+    display: none;
+  }
+
+  .theory-panel-grid {
+    grid-template-columns: 1fr;
+    max-height: max(
+      280px,
+      calc(70svh - 84px - env(safe-area-inset-bottom))
+    );
+    padding: 14px;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .theory-panel-grid .theory-list {
+    grid-template-columns: 1fr;
+  }
+
+  .delete-confirmation {
+    justify-content: flex-start;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .ghost-button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+/* ============================================================
+   Dark-theme leak fixes: elements with hardcoded light colors
+   that the token overrides above don't reach. Instrument visuals
+   (piano keys, guitar fretboard) and the sheet paper are left
+   alone on purpose.
+   ============================================================ */
+:root[data-theme="dark"] .resume-card {
+  background: linear-gradient(145deg, #2d261e, #241d15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), var(--shadow-sm);
+}
+
+:root[data-theme="dark"] .file-picker-button {
+  background: var(--surface-raised);
+}
+
+:root[data-theme="dark"] .file-picker-button:hover {
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-raised));
+}
+
+:root[data-theme="dark"] .status-ready {
+  background: rgba(123, 176, 137, 0.18);
+  color: #9fd0ac;
+}
+
+/* The inline guitar guide + its pills sit ON the light sheet paper, so they
+   stay light in dark mode (overriding only the label ink for contrast). */
+:root[data-theme="dark"] .musicxml-inline-guitar-label {
+  color: #6b4f36;
+}
+
+/* The instrument preview label ("下一音") is now a neutral dashed pill; its
+   inner chips carry the per-note color. Just lift the surface for the dark bg. */
+:root[data-theme="dark"] .instrument-preview-label {
+  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Tuner state chips: keep their semantic hues but lift text for a dark bg. */
+:root[data-theme="dark"] .guitar-tuner-state.is-in-tune {
+  background: rgba(123, 176, 137, 0.2);
+  color: #a3d3b0;
+}
+
+:root[data-theme="dark"] .guitar-tuner-state.is-flat {
+  background: rgba(224, 138, 60, 0.2);
+  color: #f0b277;
+}
+
+:root[data-theme="dark"] .guitar-tuner-state.is-sharp {
+  background: rgba(111, 178, 214, 0.2);
+  color: #a9d6ec;
+}
+
+/* "Faint white panel" fills — opaque white on light, a subtle lift on dark. */
+:root[data-theme="dark"] :is(
+  .work-list-item,
+  .page-sorter-item,
+  .hero-stats div,
+  .info-card,
+  .theory-line,
+  .theory-list li,
+  .privacy-note
+) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Compact pills now carry a per-note accent tint (see .guitar-compact-pill);
+   the tint is built from --note-accent, which lightens in dark mode, so no
+   flat white-lift override here. Preview pills stay card-colored + dashed. */
+:root[data-theme="dark"] .guitar-compact-pill.is-preview {
+  background: var(--surface-raised);
+}
+
+/* Form controls / interactive chips — read as raised surfaces on dark. */
+:root[data-theme="dark"] :is(
+  .field input,
+  .field select,
+  .loop-controls select,
+  .compact-field input,
+  .guitar-tuning-strings select,
+  .guitar-tuning-editor,
+  .metronome-meter-control select,
+  .guitar-tuning-preset select,
+  .metronome-beat,
+  .metronome-tempo-control input,
+  .metronome-bar .metronome-meter-control select
+) {
+  background: var(--surface-raised);
+}
+
+/* Upload cards + secondary-import (warm-white gradients on light). */
+:root[data-theme="dark"] .upload-card {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    radial-gradient(circle at top right, rgba(224, 138, 60, 0.1), transparent 42%);
+}
+
+:root[data-theme="dark"] .upload-card-primary {
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.06), rgba(224, 138, 60, 0.08)),
+    radial-gradient(circle at top right, rgba(224, 138, 60, 0.1), transparent 42%);
+}
+
+:root[data-theme="dark"] .secondary-import-options {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Metronome beat accents — keep the warm hue but dim for a dark bar. */
+:root[data-theme="dark"] .metronome-beat.is-strong {
+  border-color: rgba(224, 138, 60, 0.5);
+  background: rgba(224, 138, 60, 0.22);
+}
+
+:root[data-theme="dark"] .metronome-beat.is-accent {
+  border-color: rgba(224, 138, 60, 0.34);
+  background: rgba(224, 138, 60, 0.14);
+}
+
+:root[data-theme="dark"] .metronome-beat.is-silent {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Compact pill states now inherit per-note tints (see the dark override near
+   the top of this block). Root coloring is retired — color identifies the note,
+   not its harmonic role. */
