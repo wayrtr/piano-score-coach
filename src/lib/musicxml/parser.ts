@@ -43,6 +43,10 @@ export type ParsedMusicXmlDocument = {
   title: string | null;
 };
 
+const MAX_MUSICXML_BYTES = 32 * 1024 * 1024;
+const MAX_CONTAINER_BYTES = 1024 * 1024;
+const noteNameCollator = new Intl.Collator("en", { numeric: true });
+
 type MeasureGroup = {
   staffNumber: number;
   staffLabel: string;
@@ -60,15 +64,32 @@ export function extractMusicXmlSource(input: {
   const lowerName = input.fileName.toLowerCase();
 
   if (!lowerName.endsWith(".mxl")) {
+    assertXmlSize(input.buffer.byteLength, MAX_MUSICXML_BYTES);
     return {
       fileName: input.fileName,
       xmlText: input.buffer.toString("utf8"),
     };
   }
 
-  const archive = unzipSync(toUint8Array(input.buffer));
-  const containerXml = archive["META-INF/container.xml"];
-  const fallbackRootFile = findFallbackMusicXmlEntry(Object.keys(archive));
+  const archiveBytes = toUint8Array(input.buffer);
+  const fileNames: string[] = [];
+  // Inspect the directory without inflating images, audio, or other attachments.
+  // Limits are checked before fflate allocates an entry's decompressed buffer.
+  const metadata = unzipSync(archiveBytes, {
+    filter(entry) {
+      fileNames.push(entry.name);
+      if (entry.name !== "META-INF/container.xml") {
+        return false;
+      }
+      assertXmlSize(entry.compression === 0 ? Math.max(entry.originalSize, entry.size) : entry.originalSize, MAX_CONTAINER_BYTES);
+      return true;
+    },
+  });
+  const containerXml = metadata["META-INF/container.xml"];
+  if (containerXml) {
+    assertXmlSize(containerXml.byteLength, MAX_CONTAINER_BYTES);
+  }
+  const fallbackRootFile = findFallbackMusicXmlEntry(fileNames);
   const rootFile = containerXml
     ? extractRootFilePath(strFromU8(containerXml)) ?? fallbackRootFile
     : fallbackRootFile;
@@ -77,12 +98,22 @@ export function extractMusicXmlSource(input: {
     throw new Error("Invalid MXL archive: missing root MusicXML file.");
   }
 
-  const rootContent = archive[rootFile];
+  const score = unzipSync(archiveBytes, {
+    filter(entry) {
+      if (entry.name !== rootFile) {
+        return false;
+      }
+      assertXmlSize(entry.compression === 0 ? Math.max(entry.originalSize, entry.size) : entry.originalSize, MAX_MUSICXML_BYTES);
+      return true;
+    },
+  });
+  const rootContent = score[rootFile];
 
   if (!rootContent) {
     throw new Error(`Invalid MXL archive: missing ${rootFile}.`);
   }
 
+  assertXmlSize(rootContent.byteLength, MAX_MUSICXML_BYTES);
   return {
     fileName: rootFile,
     xmlText: strFromU8(rootContent),
@@ -90,7 +121,11 @@ export function extractMusicXmlSource(input: {
 }
 
 export function parseMusicXmlDocument(xmlText: string): ParsedMusicXmlDocument {
-  const document = new DOMParser().parseFromString(xmlText, "application/xml");
+  assertXmlSize(Buffer.byteLength(xmlText, "utf8"), MAX_MUSICXML_BYTES);
+  const document = parseXmlDocument(xmlText);
+  if (document.documentElement?.tagName !== "score-partwise") {
+    throw new Error("Unsupported MusicXML: expected <score-partwise> content.");
+  }
   const parts = Array.from(document.getElementsByTagName("part"));
 
   if (parts.length === 0) {
@@ -109,25 +144,22 @@ export function parseMusicXmlDocument(xmlText: string): ParsedMusicXmlDocument {
       divisions: 1,
       staffLabels: new Map<number, string>(),
     };
-    const staffCount = Math.max(
-      1,
-      ...Array.from(part.getElementsByTagName("staves")).map(
-        (element) => parseInteger(getTextContent(element)) ?? 1,
-      ),
-      ...Array.from(part.getElementsByTagName("staff")).map(
-        (element) => parseInteger(getTextContent(element)) ?? 1,
-      ),
-    );
+    let staffCount = 1;
+    for (const tag of ["staves", "staff"]) {
+      const elements = part.getElementsByTagName(tag);
+      for (let index = 0; index < elements.length; index += 1) {
+        staffCount = Math.max(staffCount, parseInteger(getTextContent(elements[index])) ?? 1);
+      }
+    }
     staffOffset += staffCount;
 
     return state;
   });
   // Shared integer ticks keep simultaneous notes aligned across part divisions.
   const commonDivisions = Array.from(document.getElementsByTagName("divisions"))
-    .map((element) => parseInteger(getTextContent(element)) ?? 1)
-    .filter((divisions) => divisions > 0)
+    .map((element) => parseTimingValue(getTextContent(element), 1))
     .reduce(leastCommonMultiple, 1);
-  const measureCount = Math.max(...partStates.map((part) => part.measures.length));
+  const measureCount = partStates.reduce((maximum, part) => Math.max(maximum, part.measures.length), 0);
   const objects: ParsedMusicXmlObject[] = [];
   const pages: ParsedMusicXmlPage[] = [];
   let currentKey = "C major";
@@ -180,12 +212,9 @@ export function parseMusicXmlDocument(xmlText: string): ParsedMusicXmlDocument {
 
       for (const child of directChildElements(partMeasure)) {
         if (child.tagName === "attributes") {
-          const divisions = parseInteger(
-            getTextContent(firstDirectChild(child, "divisions")),
-          );
-
-          if (divisions !== null && divisions > 0) {
-            part.divisions = divisions;
+          const divisionsText = getTextContent(firstDirectChild(child, "divisions"));
+          if (divisionsText !== null) {
+            part.divisions = parseTimingValue(divisionsText, 1);
           }
 
           for (const clef of directChildElementsByTagName(child, "clef")) {
@@ -219,8 +248,11 @@ export function parseMusicXmlDocument(xmlText: string): ParsedMusicXmlDocument {
         }
 
         const duration =
-          (parseInteger(getTextContent(firstDirectChild(child, "duration"))) ?? 0) *
+          parseTimingValue(getTextContent(firstDirectChild(child, "duration")), 0) *
           (commonDivisions / part.divisions);
+        if (!Number.isSafeInteger(duration) || !Number.isSafeInteger(currentPosition + duration)) {
+          throw new Error("Unsupported MusicXML: timing resolution exceeds safe integer precision.");
+        }
 
         if (child.tagName === "backup") {
           currentPosition = Math.max(0, currentPosition - duration);
@@ -382,7 +414,11 @@ function leastCommonMultiple(left: number, right: number) {
     [a, b] = [b, a % b];
   }
 
-  return (left / a) * right;
+  const resolution = (left / a) * right;
+  if (!Number.isSafeInteger(resolution)) {
+    throw new Error("Unsupported MusicXML: timing resolution exceeds safe integer precision.");
+  }
+  return resolution;
 }
 
 function circleOfFifthsToKeyName(fifths: number, mode: string) {
@@ -440,10 +476,21 @@ function parsePitchName(noteElement: Element) {
   const octave = getTextContent(firstDirectChild(pitchElement, "octave"));
 
   if (!step || !octave) {
-    return null;
+    throw new Error("Invalid MusicXML pitch: missing step or octave.");
   }
 
-  const alter = parseInteger(getTextContent(firstDirectChild(pitchElement, "alter"))) ?? 0;
+  const alterText = getTextContent(firstDirectChild(pitchElement, "alter"));
+  const alter = alterText === null ? 0 : Number(alterText);
+  const octaveNumber = Number(octave);
+  if (
+    !/^[A-G]$/i.test(step) ||
+    !/^-?\d+$/.test(octave) ||
+    !Number.isSafeInteger(octaveNumber) ||
+    !Number.isSafeInteger(12 * (octaveNumber + 1) + alter) ||
+    !Number.isInteger(alter) || alter < -2 || alter > 2
+  ) {
+    throw new Error("Unsupported MusicXML pitch: expected an integer octave and a semitone alteration from -2 to 2.");
+  }
 
   return `${step.toUpperCase()}${accidentalFromAlter(alter)}${octave}`;
 }
@@ -469,9 +516,7 @@ function accidentalFromAlter(alter: number) {
 }
 
 function compareNoteNames(left: string, right: string) {
-  return left.localeCompare(right, "en", {
-    numeric: true,
-  });
+  return noteNameCollator.compare(left, right);
 }
 
 function firstElement<T extends Element>(items: ArrayLike<T>) {
@@ -501,7 +546,12 @@ function firstDirectChild(parent: Element | null, tagName: string) {
     return null;
   }
 
-  return directChildElements(parent).find((child) => child.tagName === tagName) ?? null;
+  for (let child = parent.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType === 1 && (child as Element).tagName === tagName) {
+      return child as Element;
+    }
+  }
+  return null;
 }
 
 function getTextContent(element: Element | null) {
@@ -515,7 +565,7 @@ function parseInteger(value: string | null) {
   }
 
   const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : null;
+  return Number.isSafeInteger(parsed) ? parsed : null;
 }
 
 function measureStartsNewPage(measureElement: Element) {
@@ -525,9 +575,10 @@ function measureStartsNewPage(measureElement: Element) {
 }
 
 function findFallbackMusicXmlEntry(fileNames: string[]) {
+  const scoreNames = fileNames.filter((fileName) => !fileName.toUpperCase().startsWith("META-INF/"));
   return (
-    fileNames.find((fileName) => fileName.toLowerCase().endsWith(".musicxml")) ??
-    fileNames.find((fileName) => fileName.toLowerCase().endsWith(".xml")) ??
+    scoreNames.find((fileName) => fileName.toLowerCase().endsWith(".musicxml")) ??
+    scoreNames.find((fileName) => fileName.toLowerCase().endsWith(".xml")) ??
     null
   );
 }
@@ -537,7 +588,7 @@ function toUint8Array(buffer: Buffer) {
 }
 
 function extractRootFilePath(containerXmlText: string) {
-  const document = new DOMParser().parseFromString(containerXmlText, "application/xml");
+  const document = parseXmlDocument(containerXmlText);
   const rootFileElement =
     firstElement(document.getElementsByTagName("rootfile")) ??
     findElementByLocalName(document.documentElement, "rootfile");
@@ -569,4 +620,38 @@ function findElementByLocalName(root: Element | null, localName: string): Elemen
 function matchesLocalName(element: Element, localName: string) {
   const candidate = element.localName ?? element.tagName;
   return candidate === localName || candidate.endsWith(`:${localName}`);
+}
+
+
+function assertXmlSize(bytes: number, limit: number) {
+  if (bytes > limit) {
+    throw new Error(`MusicXML document exceeds the ${limit / (1024 * 1024)} MiB size limit.`);
+  }
+}
+
+function parseXmlDocument(xmlText: string) {
+  let invalid = false;
+  const markInvalid = () => { invalid = true; };
+  const document = new DOMParser({
+    errorHandler: {
+      warning: markInvalid,
+      error: markInvalid,
+      fatalError: markInvalid,
+    },
+  }).parseFromString(xmlText, "application/xml");
+  if (invalid || !document?.documentElement) {
+    throw new Error("Invalid MusicXML: malformed XML document.");
+  }
+  return document;
+}
+
+function parseTimingValue(value: string | null, minimum: number) {
+  if (value === null) {
+    return minimum;
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < minimum) {
+    throw new Error("Unsupported MusicXML timing resolution: expected nonnegative integer durations and positive integer divisions.");
+  }
+  return parsed;
 }

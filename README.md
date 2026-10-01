@@ -135,6 +135,8 @@ storage/
 
 图片识谱的准确性仍取决于原稿质量与 Audiveris 的识别结果。
 
+MusicXML 内核会拒绝损坏的 XML、超出安全精度的时序，以及当前琴键模型不支持的音高，避免静默显示错音。单份 XML 上限为 32 MiB，MXL 容器清单上限为 1 MiB；无关附件不会解压。内部优化、性能复现与验证边界见 [内核验证记录](docs/engineering/core-optimization.md)。
+
 ## 启动与关闭说明
 
 - 日常只需要双击一次 `启动陪练.command`。

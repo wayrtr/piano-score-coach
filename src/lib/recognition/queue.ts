@@ -10,6 +10,7 @@ type RecognitionQueueJobState = {
   workId: string;
   status: "queued" | "running";
   cancelled: boolean;
+  promise: Promise<unknown>;
 };
 
 type RecognitionQueueState = {
@@ -43,46 +44,58 @@ export function enqueueRecognitionTask<T>(
   input: RecognitionQueueTask<T>,
 ) {
   const state = getRecognitionQueueState();
+  const existingJob = state.jobs.get(input.jobId);
 
-  state.jobs.set(input.jobId, {
+  // Repeated requests for one score share its active run. Replacing this entry
+  // would hide a running job and let its cleanup delete the newer queued job.
+  if (existingJob && !existingJob.cancelled) {
+    return existingJob.promise as Promise<T | void>;
+  }
+
+  const { promise, resolve, reject } = Promise.withResolvers<T | void>();
+  const jobState: RecognitionQueueJobState = {
     workId: input.workId,
     status: "queued",
     cancelled: false,
-  });
+    promise,
+  };
+  state.jobs.set(input.jobId, jobState);
 
-  return state.queue.add(async () => {
-    const jobState = state.jobs.get(input.jobId);
-
-    if (!jobState || jobState.cancelled) {
+  const removeJob = () => {
+    // A cancelled queued job may have been replaced before it reaches the
+    // front of the queue. It must not remove that replacement's state.
+    if (state.jobs.get(input.jobId) === jobState) {
       state.jobs.delete(input.jobId);
+    }
+  };
+
+  void state.queue.add(async () => {
+    if (jobState.cancelled) {
+      removeJob();
       return undefined;
     }
 
-    state.jobs.set(input.jobId, {
-      ...jobState,
-      status: "running",
-    });
+    jobState.status = "running";
 
     try {
       return await input.task();
     } finally {
-      state.jobs.delete(input.jobId);
+      removeJob();
     }
-  }, { id: input.jobId });
+  }, { id: input.jobId }).then(resolve, reject);
+
+  return promise;
 }
 
 export function cancelQueuedRecognitionTasksForWork(workId: string) {
   const state = getRecognitionQueueState();
 
-  for (const [jobId, jobState] of state.jobs.entries()) {
+  for (const jobState of state.jobs.values()) {
     if (jobState.workId !== workId || jobState.status !== "queued") {
       continue;
     }
 
-    state.jobs.set(jobId, {
-      ...jobState,
-      cancelled: true,
-    });
+    jobState.cancelled = true;
   }
 }
 

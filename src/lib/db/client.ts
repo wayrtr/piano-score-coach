@@ -169,6 +169,12 @@ function initializeDatabaseSchema(sqlite: BetterSqlite3.Database) {
       guitar_view_mode TEXT NOT NULL DEFAULT 'recommended',
       updated_at TEXT NOT NULL
     );
+
+    CREATE INDEX IF NOT EXISTS idx_score_objects_work_page
+      ON score_objects(work_page_id);
+
+    CREATE INDEX IF NOT EXISTS idx_recognition_results_work_page
+      ON recognition_results(work_page_id);
   `);
 
   ensureTableColumn(

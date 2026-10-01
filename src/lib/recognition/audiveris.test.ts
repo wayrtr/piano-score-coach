@@ -161,6 +161,43 @@ process.exit(0);
     expect(process.env.TESSDATA_PREFIX).toBeUndefined();
   });
 
+  it.skipIf(process.platform === "win32")("terminates wrapper descendants that inherit output pipes on timeout", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "piano-audiveris-descendant-"));
+    const commandPath = path.join(root, "wrapper.mjs");
+    const terminatedPath = path.join(root, "descendant-terminated");
+    const descendantCode = `
+      const fs = require("node:fs");
+      process.on("SIGTERM", () => {
+        fs.writeFileSync(${JSON.stringify(terminatedPath)}, "terminated");
+        process.exit(0);
+      });
+      setTimeout(() => process.exit(0), 4_000);
+    `;
+    fs.writeFileSync(commandPath, `#!/usr/bin/env node
+import { spawn } from "node:child_process";
+spawn(process.execPath, ["-e", ${JSON.stringify(descendantCode)}], {
+  stdio: ["ignore", "inherit", "inherit"],
+});
+setInterval(() => {}, 1_000);
+`);
+    fs.chmodSync(commandPath, 0o755);
+    vi.stubEnv("AUDIVERIS_COMMAND", commandPath);
+    const startedAt = performance.now();
+
+    try {
+      await expect(recognizeScoreWithAudiveris({
+        inputPath: path.join(root, "score.pdf"),
+        outputRoot: path.join(root, "output"),
+        timeoutMs: 1_000,
+      })).rejects.toThrow("识别超时");
+
+      expect(performance.now() - startedAt).toBeLessThan(3_000);
+      expect(fs.readFileSync(terminatedPath, "utf8")).toBe("terminated");
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   it.each([
     { cache: "missing", prefix: undefined },
     { cache: "partial", prefix: undefined },

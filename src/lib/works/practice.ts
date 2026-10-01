@@ -675,18 +675,30 @@ function hydrateLegacyMusicXmlOnsets(
 }
 
 function readPngDimensions(imagePath: string) {
-  const buffer = fs.readFileSync(imagePath);
-  const signature = buffer.subarray(12, 16).toString("ascii");
-
-  if (signature !== "IHDR") {
+  const unknownSize = { width: 0, height: 0 };
+  let descriptor: number | undefined;
+  try {
+    descriptor = fs.openSync(imagePath, "r");
+    // Polling the workspace needs only IHDR, not every multi-megabyte page.
+    const header = Buffer.alloc(24);
+    if (
+      fs.readSync(descriptor, header, 0, header.length, 0) !== header.length ||
+      !header.subarray(0, 8).equals(Buffer.from("89504e470d0a1a0a", "hex")) ||
+      header.readUInt32BE(8) !== 13 ||
+      header.subarray(12, 16).toString("ascii") !== "IHDR"
+    ) {
+      return unknownSize;
+    }
     return {
-      width: 0,
-      height: 0,
+      width: header.readUInt32BE(16),
+      height: header.readUInt32BE(20),
     };
+  } catch {
+    // Missing or truncated cache images must not make the whole work unreadable.
+    return unknownSize;
+  } finally {
+    if (descriptor !== undefined) {
+      fs.closeSync(descriptor);
+    }
   }
-
-  return {
-    width: buffer.readUInt32BE(16),
-    height: buffer.readUInt32BE(20),
-  };
 }

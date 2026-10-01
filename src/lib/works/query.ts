@@ -1,4 +1,4 @@
-import { asc, desc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, exists } from "drizzle-orm";
 
 import { getDatabase } from "@/lib/db/client";
 import {
@@ -34,60 +34,77 @@ export type WorkListItem = {
   pages: WorkPageListItem[];
 };
 
-export function listWorks(): WorkListItem[] {
+function loadWorkListItems(workId?: string): WorkListItem[] {
   const db = getDatabase();
-  const workRows = db.select().from(works).orderBy(desc(works.updatedAt)).all();
+  const workRows = db
+    .select({
+      id: works.id,
+      title: works.title,
+      sourceType: works.sourceType,
+      pageCount: works.pageCount,
+      status: works.status,
+      lastPracticedAt: works.lastPracticedAt,
+      lastPositionPageIndex: works.lastPositionPageIndex,
+      lastPositionObjectId: works.lastPositionObjectId,
+      lastPositionMeasure: works.lastPositionMeasure,
+      updatedAt: works.updatedAt,
+      // Effective status only needs to distinguish an empty score from a
+      // playable one. EXISTS stops at the first object instead of loading or
+      // counting every note in the library.
+      hasScoreObjects: exists(
+        db
+          .select({ id: scoreObjects.id })
+          .from(workPages)
+          .innerJoin(scoreObjects, eq(scoreObjects.workPageId, workPages.id))
+          .where(eq(workPages.workId, works.id)),
+      ).mapWith(Number),
+    })
+    .from(works)
+    .where(workId === undefined ? undefined : eq(works.id, workId))
+    .orderBy(desc(works.updatedAt))
+    .all();
 
   if (workRows.length === 0) {
     return [];
   }
 
   const pageRows = db
-    .select()
+    .select({
+      id: workPages.id,
+      workId: workPages.workId,
+      pageIndex: workPages.pageIndex,
+      recognitionStatus: workPages.recognitionStatus,
+    })
     .from(workPages)
-    .where(
-      inArray(
-        workPages.workId,
-        workRows.map((work) => work.id),
-      ),
-    )
+    .where(workId === undefined ? undefined : eq(workPages.workId, workId))
     .orderBy(asc(workPages.pageIndex))
     .all();
-  const pageIds = pageRows.map((page) => page.id);
-  const pageToWorkId = new Map(pageRows.map((page) => [page.id, page.workId]));
   const practiceRows = db
-    .select()
+    .select({
+      workId: practiceStates.workId,
+      lastPageIndex: practiceStates.lastPageIndex,
+      lastObjectId: practiceStates.lastObjectId,
+      lastMeasure: practiceStates.lastMeasure,
+      instrumentMode: practiceStates.instrumentMode,
+    })
     .from(practiceStates)
     .where(
-      inArray(
-        practiceStates.workId,
-        workRows.map((work) => work.id),
-      ),
+      workId === undefined ? undefined : eq(practiceStates.workId, workId),
     )
     .all();
   const practiceByWorkId = new Map(
     practiceRows.map((practiceState) => [practiceState.workId, practiceState]),
   );
-  const objectRows =
-    pageIds.length > 0
-      ? db
-          .select({
-            workPageId: scoreObjects.workPageId,
-          })
-          .from(scoreObjects)
-          .where(inArray(scoreObjects.workPageId, pageIds))
-          .all()
-      : [];
-  const objectCountByWorkId = new Map<string, number>();
+  const pagesByWorkId = new Map<string, WorkPageListItem[]>();
 
-  for (const row of objectRows) {
-    const workId = pageToWorkId.get(row.workPageId);
-
-    if (!workId) {
-      continue;
-    }
-
-    objectCountByWorkId.set(workId, (objectCountByWorkId.get(workId) ?? 0) + 1);
+  for (const page of pageRows) {
+    const pages = pagesByWorkId.get(page.workId) ?? [];
+    pages.push({
+      id: page.id,
+      pageIndex: page.pageIndex,
+      recognitionStatus: page.recognitionStatus,
+    });
+    pagesByWorkId.set(page.workId, pages);
   }
 
   return workRows
@@ -102,7 +119,7 @@ export function listWorks(): WorkListItem[] {
         status: deriveEffectiveWorkStatus({
           sourceType: work.sourceType,
           status: work.status,
-          totalObjectCount: objectCountByWorkId.get(work.id) ?? 0,
+          totalObjectCount: work.hasScoreObjects,
         }),
         lastPracticedAt: work.lastPracticedAt,
         lastPageIndex:
@@ -113,13 +130,7 @@ export function listWorks(): WorkListItem[] {
           practiceState?.lastMeasure ?? work.lastPositionMeasure ?? null,
         instrumentMode: practiceState?.instrumentMode ?? null,
         updatedAt: work.updatedAt,
-        pages: pageRows
-          .filter((page) => page.workId === work.id)
-          .map((page) => ({
-            id: page.id,
-            pageIndex: page.pageIndex,
-            recognitionStatus: page.recognitionStatus,
-          })),
+        pages: pagesByWorkId.get(work.id) ?? [],
       };
     })
     .sort(compareWorkListOrder)
@@ -138,8 +149,12 @@ export function listWorks(): WorkListItem[] {
     }));
 }
 
+export function listWorks(): WorkListItem[] {
+  return loadWorkListItems();
+}
+
 export function getWorkListItem(workId: string) {
-  return listWorks().find((work) => work.id === workId) ?? null;
+  return loadWorkListItems(workId)[0] ?? null;
 }
 
 export function getWorkDetail(workId: string) {

@@ -64,12 +64,15 @@ export function parseNoteName(noteName: string): ParsedNoteName | null {
   const letter = letterRaw.toUpperCase() as NoteLetter;
   const octave = Number.parseInt(octaveRaw, 10);
 
-  if (!Number.isInteger(octave) || NOTE_BASE_OFFSETS[letter] === undefined) {
+  if (!Number.isSafeInteger(octave) || NOTE_BASE_OFFSETS[letter] === undefined) {
     return null;
   }
 
   const accidental = parseAccidental(accidentalRaw);
   const midi = 12 * (octave + 1) + NOTE_BASE_OFFSETS[letter] + accidental;
+  if (!Number.isSafeInteger(midi)) {
+    return null;
+  }
 
   return {
     input,
@@ -133,7 +136,7 @@ export function normalizeNoteName(noteName: string) {
 
 /** Return the canonical sharp spelling for a MIDI pitch. */
 export function midiToSharpNoteName(midi: number) {
-  if (!Number.isInteger(midi)) {
+  if (!Number.isSafeInteger(midi)) {
     return null;
   }
 

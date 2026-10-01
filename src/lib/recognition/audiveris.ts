@@ -121,9 +121,13 @@ function runAudiverisProcess(input: {
   timeoutMs: number;
 }) {
   return new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+    const useProcessGroup = process.platform !== "win32";
     const child = spawn(input.command, input.args, {
       env: input.env,
       stdio: ["ignore", "pipe", "pipe"],
+      // A wrapper may launch Java as a descendant. Isolate this invocation so
+      // timeout signals reach only its processes, rather than our own group.
+      detached: useProcessGroup,
     });
     let stdout = "";
     let stderr = "";
@@ -136,65 +140,103 @@ function runAudiverisProcess(input: {
       }
 
       didTimeOut = true;
-      child.kill("SIGTERM");
       forceKillTimeoutId = setTimeout(() => {
-        child.kill("SIGKILL");
+        rejectTimedOut();
       }, 5_000);
       forceKillTimeoutId.unref();
+      terminate("SIGTERM");
     }, input.timeoutMs);
 
-    child.stdout?.on("data", (chunk: Buffer | string) => {
-      stdout = appendCapturedOutput(stdout, chunk);
-    });
-    child.stderr?.on("data", (chunk: Buffer | string) => {
-      stderr = appendCapturedOutput(stderr, chunk);
-    });
-    child.on("error", (error: NodeJS.ErrnoException) => {
+    function terminate(signal: NodeJS.Signals) {
+      try {
+        if (useProcessGroup && child.pid !== undefined) {
+          process.kill(-child.pid, signal);
+        } else {
+          child.kill(signal);
+        }
+      } catch {
+        // The process/group may already have exited. Pipe teardown below also
+        // bounds the wait when a process cannot be killed on this platform.
+      }
+    }
+
+    function clearResources() {
+      clearTimeout(timeoutId);
+      if (forceKillTimeoutId) {
+        clearTimeout(forceKillTimeoutId);
+        forceKillTimeoutId = null;
+      }
+      child.stdout?.removeListener("data", captureStdout);
+      child.stderr?.removeListener("data", captureStderr);
+    }
+
+    function rejectTimedOut() {
       if (settled) {
         return;
       }
 
       settled = true;
-      clearTimeout(timeoutId);
-      if (forceKillTimeoutId) {
-        clearTimeout(forceKillTimeoutId);
-      }
+      clearResources();
+      // Also kill surviving descendants when the launcher closes early: a
+      // child which ignores SIGTERM may have redirected its output elsewhere.
+      terminate("SIGKILL");
+      child.stdout?.destroy();
+      child.stderr?.destroy();
+      child.unref();
       reject(
-        didTimeOut
-          ? new Error(
-              `Audiveris 识别超时（${Math.ceil(input.timeoutMs / 1000)} 秒），原谱仍已保留。`,
-            )
-          : error.code === "ENOENT"
-            ? new Error(
-                "未找到 Audiveris。请先安装 Audiveris，或用 AUDIVERIS_COMMAND 指定可执行文件路径。",
-              )
-            : error.code === "EACCES"
-              ? new Error(
-                  "Audiveris 没有运行权限。请检查文件权限和 macOS 的“隐私与安全性”设置。",
-                )
-              : error,
+        new Error(
+          `Audiveris 识别超时（${Math.ceil(input.timeoutMs / 1000)} 秒），原谱仍已保留。`,
+        ),
       );
-    });
-    child.on("close", (exitCode, signal) => {
-      if (forceKillTimeoutId) {
-        clearTimeout(forceKillTimeoutId);
-      }
+    }
 
+    function captureStdout(chunk: Buffer | string) {
+      stdout = appendCapturedOutput(stdout, chunk);
+    }
+    function captureStderr(chunk: Buffer | string) {
+      stderr = appendCapturedOutput(stderr, chunk);
+    }
+    child.stdout?.on("data", captureStdout);
+    child.stderr?.on("data", captureStderr);
+    const onError = (error: NodeJS.ErrnoException) => {
       if (settled) {
         return;
       }
-
-      settled = true;
-      clearTimeout(timeoutId);
 
       if (didTimeOut) {
-        reject(
-          new Error(
-            `Audiveris 识别超时（${Math.ceil(input.timeoutMs / 1000)} 秒），原谱仍已保留。`,
-          ),
-        );
+        rejectTimedOut();
         return;
       }
+
+      settled = true;
+      clearResources();
+      reject(
+        error.code === "ENOENT"
+          ? new Error(
+              "未找到 Audiveris。请先安装 Audiveris，或用 AUDIVERIS_COMMAND 指定可执行文件路径。",
+            )
+          : error.code === "EACCES"
+            ? new Error(
+                "Audiveris 没有运行权限。请检查文件权限和 macOS 的“隐私与安全性”设置。",
+              )
+            : error,
+      );
+    };
+    child.once("error", onError);
+    child.once("close", (exitCode, signal) => {
+      child.removeListener("error", onError);
+
+      if (settled) {
+        return;
+      }
+
+      if (didTimeOut) {
+        rejectTimedOut();
+        return;
+      }
+
+      settled = true;
+      clearResources();
 
       if (exitCode === 0) {
         resolve({ stdout, stderr });

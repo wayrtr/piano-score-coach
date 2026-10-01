@@ -14,6 +14,7 @@ import {
   ensureDatabaseFilesystemLayout,
   getSqlite,
   getDatabasePaths,
+  resetTestDatabase,
 } from "@/lib/db/client";
 import { getWorkStoragePaths } from "@/lib/storage/filesystem";
 
@@ -130,6 +131,67 @@ describe("database filesystem layout", () => {
       music_xml_path: null,
       recognition_status: "succeeded",
     });
+  });
+
+  it.each([false, true])("adds page lookup indexes without changing existing data (legacy: %s)", (legacy) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "piano-score-coach-indexes-"));
+    const paths = ensureDatabaseFilesystemLayout({ root, environment: "test" });
+
+    if (legacy) {
+      const legacyDatabase = new BetterSqlite3(paths.databaseFile);
+      legacyDatabase.exec(`
+        CREATE TABLE score_objects (
+          id TEXT PRIMARY KEY, work_page_id TEXT NOT NULL, type TEXT NOT NULL,
+          bbox_json TEXT NOT NULL, staff TEXT NOT NULL, measure INTEGER NOT NULL,
+          notes_json TEXT NOT NULL, confidence REAL NOT NULL, source TEXT NOT NULL,
+          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE recognition_results (
+          id TEXT PRIMARY KEY, work_page_id TEXT NOT NULL, model_name TEXT NOT NULL,
+          version TEXT NOT NULL, raw_response TEXT NOT NULL, normalized_data TEXT NOT NULL,
+          confidence_min REAL NOT NULL, confidence_max REAL NOT NULL,
+          confidence_average REAL NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+        INSERT INTO score_objects
+          (id, work_page_id, type, bbox_json, staff, measure, notes_json, confidence, source)
+          VALUES ('legacy_object', 'legacy_page', 'note', '{}', 'treble', 1, '["C4"]', 1, 'model');
+        INSERT INTO recognition_results
+          (id, work_page_id, model_name, version, raw_response, normalized_data,
+           confidence_min, confidence_max, confidence_average)
+          VALUES ('legacy_result', 'legacy_page', 'audiveris', 'v1', '{}', '{}', 1, 1, 1);
+      `);
+      legacyDatabase.close();
+    }
+
+    try {
+      const db = getSqlite({ root, environment: "test" });
+      for (const table of ["score_objects", "recognition_results"]) {
+        const indexName = `idx_${table}_work_page`;
+        const indexes = db.prepare(`PRAGMA index_list(${table})`).all();
+        expect(indexes).toEqual(expect.arrayContaining([
+          expect.objectContaining({ name: indexName, unique: 0 }),
+        ]));
+        expect(db.prepare(`PRAGMA index_info(${indexName})`).all()).toEqual([
+          expect.objectContaining({ name: "work_page_id" }),
+        ]);
+        const queryPlan = db.prepare(`
+          EXPLAIN QUERY PLAN SELECT id FROM ${table} WHERE work_page_id = ?
+        `).all("legacy_page") as Array<{ detail: string }>;
+        expect(queryPlan.some((step) => step.detail.includes(indexName))).toBe(true);
+      }
+
+      if (legacy) {
+        expect(db.prepare("SELECT id, notes_json, onset FROM score_objects").all()).toEqual([
+          { id: "legacy_object", notes_json: '["C4"]', onset: null },
+        ]);
+        expect(db.prepare("SELECT id, raw_response FROM recognition_results").all()).toEqual([
+          { id: "legacy_result", raw_response: "{}" },
+        ]);
+      }
+    } finally {
+      resetTestDatabase(root);
+      fs.rmSync(root, { recursive: true, force: true });
+    }
   });
 });
 

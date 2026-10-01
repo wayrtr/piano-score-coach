@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  index,
   integer,
   real,
   sqliteTable,
@@ -51,7 +52,9 @@ export const recognitionResults = sqliteTable("recognition_results", {
   confidenceMax: real("confidence_max").notNull(),
   confidenceAverage: real("confidence_average").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+  index("idx_recognition_results_work_page").on(table.workPageId),
+]);
 
 export const scoreObjects = sqliteTable("score_objects", {
   id: text("id").primaryKey(),
@@ -67,7 +70,9 @@ export const scoreObjects = sqliteTable("score_objects", {
   confidence: real("confidence").notNull(),
   source: text("source").notNull(),
   createdAt: text("created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
-});
+}, (table) => [
+  index("idx_score_objects_work_page").on(table.workPageId),
+]);
 
 export const practiceStates = sqliteTable("practice_states", {
   id: text("id").primaryKey(),

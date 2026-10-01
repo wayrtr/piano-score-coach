@@ -469,3 +469,141 @@ describe("MusicXML parser", () => {
     )).toBe(true);
   });
 });
+
+
+describe("MusicXML input boundaries", () => {
+  const scoreWithPitch = (pitch: string, attributes = "<divisions>1</divisions>") =>
+    `<score-partwise><part id="P1"><measure number="1"><attributes>${attributes}</attributes>
+      <note><pitch>${pitch}</pitch><duration>1</duration></note>
+    </measure></part></score-partwise>`;
+
+  it.each(["0.5", "-0.5", "3", "1garbage"])(
+    "rejects unsupported pitch alteration %s rather than displaying the wrong piano key",
+    (alter) => {
+      expect(() => parseMusicXmlDocument(scoreWithPitch(
+        `<step>C</step><alter>${alter}</alter><octave>4</octave>`,
+      ))).toThrow(/pitch/i);
+    },
+  );
+
+  it.each([
+    "<step>H</step><octave>4</octave>",
+    "<step>C</step>",
+    "<octave>4</octave>",
+    "<step>C</step><octave>4oops</octave>",
+    "<step>C</step><octave>9007199254740992</octave>",
+  ])("rejects invalid pitch data: %s", (pitch) => {
+    expect(() => parseMusicXmlDocument(scoreWithPitch(pitch))).toThrow(/pitch/i);
+  });
+
+  it("rejects divisions whose common tick resolution would lose precision", () => {
+    const xml = `<score-partwise>
+      ${[99999989, 99999971].map((divisions, index) => `
+        <part id="P${index}"><measure number="1"><attributes><divisions>${divisions}</divisions></attributes>
+        <note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration></note>
+        </measure></part>`).join("")}
+      </score-partwise>`;
+    expect(() => parseMusicXmlDocument(xml)).toThrow(/resolution/i);
+  });
+
+  it.each(["0", "-1", "2garbage", "9007199254740992"])(
+    "rejects invalid divisions %s instead of silently changing timing",
+    (divisions) => {
+      expect(() => parseMusicXmlDocument(scoreWithPitch(
+        "<step>C</step><octave>4</octave>", `<divisions>${divisions}</divisions>`,
+      ))).toThrow(/resolution/i);
+    },
+  );
+
+  it.each(["-1", "2garbage", "9007199254740992"])(
+    "rejects invalid duration %s instead of creating corrupt onset values",
+    (duration) => {
+      const xml = scoreWithPitch("<step>C</step><octave>4</octave>")
+        .replace("<duration>1</duration>", `<duration>${duration}</duration>`);
+      expect(() => parseMusicXmlDocument(xml)).toThrow(/resolution/i);
+    },
+  );
+
+  it("does not treat MXL metadata as the score when no root file is declared", () => {
+    const archive = zipSync({
+      "META-INF/container.xml": strToU8("<container><rootfiles/></container>"),
+      "META-INF/metadata.xml": strToU8("<metadata/>"),
+      "score.xml": strToU8(DEMO_MUSICXML),
+    });
+    expect(extractMusicXmlSource({ buffer: Buffer.from(archive), fileName: "score.mxl" }))
+      .toEqual({ fileName: "score.xml", xmlText: DEMO_MUSICXML });
+  });
+
+  it("rejects an archive containing only metadata", () => {
+    const archive = zipSync({ "META-INF/container.xml": strToU8("<container/>") });
+    expect(() => extractMusicXmlSource({ buffer: Buffer.from(archive), fileName: "score.mxl" }))
+      .toThrow(/missing root MusicXML/i);
+  });
+
+  it("rejects malformed XML instead of importing a repaired partial document", () => {
+    const invalid = scoreWithPitch("<step>C</step><octave>4</octave>")
+      .replace("</measure>", "</wrong>");
+    expect(() => parseMusicXmlDocument(invalid)).toThrow(/xml/i);
+  });
+});
+
+// Patch only the ZIP directory, so oversized-entry tests never allocate a bomb.
+function patchZipEntry(buffer: Buffer, name: string, patch: (offset: number) => void) {
+  for (let offset = 0; offset <= buffer.length - 46; offset += 1) {
+    if (buffer.readUInt32LE(offset) !== 0x02014b50) continue;
+    const nameLength = buffer.readUInt16LE(offset + 28);
+    if (buffer.subarray(offset + 46, offset + 46 + nameLength).toString() === name) {
+      patch(offset);
+      return;
+    }
+  }
+  throw new Error(`Missing test ZIP entry: ${name}`);
+}
+
+describe("bounded MXL extraction", () => {
+  it("does not inflate unused attachments", () => {
+    const archive = Buffer.from(zipSync({
+      "score.musicxml": strToU8(DEMO_MUSICXML),
+      "attachments/unused.bin": new Uint8Array([1, 2, 3]),
+    }));
+    patchZipEntry(archive, "attachments/unused.bin", (offset) => {
+      archive.writeUInt16LE(99, offset + 10); // Unsupported compression, unused.
+    });
+    expect(extractMusicXmlSource({ buffer: archive, fileName: "score.mxl" }).xmlText)
+      .toBe(DEMO_MUSICXML);
+  });
+
+  it.each([
+    ["score.musicxml", 32 * 1024 * 1024 + 1],
+    ["META-INF/container.xml", 1024 * 1024 + 1],
+  ] as const)("rejects oversized %s before inflation", (name, size) => {
+    const archive = Buffer.from(zipSync({
+      "META-INF/container.xml": strToU8('<container><rootfiles><rootfile full-path="score.musicxml"/></rootfiles></container>'),
+      "score.musicxml": strToU8(DEMO_MUSICXML),
+    }));
+    patchZipEntry(archive, name, (offset) => archive.writeUInt32LE(size, offset + 24));
+    expect(() => extractMusicXmlSource({ buffer: archive, fileName: "score.mxl" }))
+      .toThrow(/size limit/i);
+  });
+
+  it("bounds stored ZIP entries even when originalSize is forged", () => {
+    const oversized = "<container>" + " ".repeat(1024 * 1024) + "</container>";
+    const archive = Buffer.from(zipSync({
+      "META-INF/container.xml": strToU8(oversized),
+      "score.musicxml": strToU8(DEMO_MUSICXML),
+    }, { level: 0 }));
+    patchZipEntry(archive, "META-INF/container.xml", (offset) => archive.writeUInt32LE(1, offset + 24));
+    expect(() => extractMusicXmlSource({ buffer: archive, fileName: "score.mxl" }))
+      .toThrow(/size limit/i);
+  });
+
+  it("honors a namespaced manifest and a nonstandard root filename", () => {
+    const archive = Buffer.from(zipSync({
+      "META-INF/container.xml": strToU8('<m:container xmlns:m="urn:oasis:names:tc:opendocument:xmlns:container"><m:rootfiles><m:rootfile full-path="music/score.data"/></m:rootfiles></m:container>'),
+      "other.xml": strToU8("<not-a-score/>"),
+      "music/score.data": strToU8(DEMO_MUSICXML),
+    }));
+    expect(extractMusicXmlSource({ buffer: archive, fileName: "score.MXL" }))
+      .toEqual({ fileName: "music/score.data", xmlText: DEMO_MUSICXML });
+  });
+});

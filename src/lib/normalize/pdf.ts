@@ -18,40 +18,45 @@ export async function normalizePdfBuffer(input: {
     data: new Uint8Array(input.buffer),
   });
 
-  const document = await loadingTask.promise;
   const pages = [];
   const startingPageIndex = input.startingPageIndex ?? 0;
 
   try {
+    const document = await loadingTask.promise;
+
     for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
       const page = await document.getPage(pageNumber);
-      const viewport = page.getViewport({ scale: PDF_SCALE });
-      const sourceWidth = Math.round(viewport.width);
-      const sourceHeight = Math.round(viewport.height);
-      const canvas = createCanvas(sourceWidth, sourceHeight);
-      const context = canvas.getContext("2d");
 
-      await page.render({
-        canvas: canvas as unknown as HTMLCanvasElement,
-        canvasContext: context as unknown as CanvasRenderingContext2D,
-        viewport,
-        background: "white",
-      }).promise;
+      try {
+        const viewport = page.getViewport({ scale: PDF_SCALE });
+        const sourceWidth = Math.round(viewport.width);
+        const sourceHeight = Math.round(viewport.height);
+        const canvas = createCanvas(sourceWidth, sourceHeight);
+        const context = canvas.getContext("2d");
 
-      pages.push(
-        createNormalizedPageImage({
-          pageIndex: startingPageIndex + pageNumber - 1,
-          buffer: canvas.toBuffer("image/png"),
-          sourceWidth,
-          sourceHeight,
-        }),
-      );
+        await page.render({
+          canvas: canvas as unknown as HTMLCanvasElement,
+          canvasContext: context as unknown as CanvasRenderingContext2D,
+          viewport,
+          background: "white",
+        }).promise;
 
-      page.cleanup();
+        pages.push(
+          createNormalizedPageImage({
+            pageIndex: startingPageIndex + pageNumber - 1,
+            buffer: canvas.toBuffer("image/png"),
+            sourceWidth,
+            sourceHeight,
+          }),
+        );
+      } finally {
+        page.cleanup();
+      }
     }
 
     return pages;
   } finally {
-    await document.destroy();
+    // This owns the worker even when loading fails before a document exists.
+    await loadingTask.destroy();
   }
 }

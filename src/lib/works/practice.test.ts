@@ -202,6 +202,39 @@ describe("practice work selectors and mutations", () => {
     }).run();
   });
 
+  it("reads only the PNG header when falling back to cached image dimensions", () => {
+    const read = vi.spyOn(fs, "readSync");
+    const close = vi.spyOn(fs, "closeSync");
+    try {
+      const work = getPracticeWorkDetail("work_1", { root, environment: "test" });
+      expect(work?.pages[2]).toMatchObject({ imageWidth: 880, imageHeight: 1280 });
+      expect(read).toHaveBeenCalledTimes(1);
+      expect(read.mock.calls[0]?.slice(2)).toEqual([0, 24, 0]);
+      expect(close).toHaveBeenCalledWith(read.mock.calls[0]?.[0]);
+    } finally {
+      read.mockRestore();
+      close.mockRestore();
+    }
+  });
+
+  it.each(["missing", "truncated", "invalid signature"])(
+    "keeps a work readable with a %s fallback PNG",
+    (kind) => {
+      const imagePath = path.join(root, "works", "work_1", "pages", "page-0003.png");
+      if (kind === "missing") {
+        fs.unlinkSync(imagePath);
+      } else if (kind === "truncated") {
+        fs.writeFileSync(imagePath, createPngBuffer(880, 1280).subarray(0, 20));
+      } else {
+        const invalid = createPngBuffer(880, 1280);
+        invalid[0] = 0;
+        fs.writeFileSync(imagePath, invalid);
+      }
+      expect(getPracticeWorkDetail("work_1", { root, environment: "test" })?.pages[2])
+        .toMatchObject({ imageWidth: 0, imageHeight: 0, renderMode: "image" });
+    },
+  );
+
   it("builds a page-centric practice detail with parsed objects", () => {
     const detail = getPracticeWorkDetail("work_1", {
       root,

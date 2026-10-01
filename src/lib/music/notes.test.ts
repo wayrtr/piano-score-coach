@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   describeNote,
   normalizeNoteName,
+  midiToSharpNoteName,
   parseNoteName,
 } from "@/lib/music/notes";
 
@@ -32,6 +33,14 @@ describe("shared note helpers", () => {
       sounding: "F#4",
       hasEnharmonicEquivalent: false,
     });
+  });
+
+  it("rejects pitches that cannot be represented as exact MIDI integers", () => {
+    expect(parseNoteName("C9007199254740992")).toBeNull();
+    expect(parseNoteName("B9007199254740991")).toBeNull();
+    expect(midiToSharpNoteName(Number.MAX_SAFE_INTEGER + 1)).toBeNull();
+    expect(parseNoteName("C-1")?.midi).toBe(0);
+    expect(parseNoteName("G9")?.midi).toBe(127);
   });
 
   it("rejects mixed or unsupported accidental sequences", () => {
