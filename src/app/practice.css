@@ -43,7 +43,7 @@ body:has(.practice-layout) > .app-header { display: none; }
   grid-template-rows: 48px minmax(0, 1fr);
   gap: 12px;
   height: 100%;
-  min-width: 920px;
+  min-width: 0;
   min-height: 0;
   max-width: 1800px;
   margin: 0 auto;
@@ -500,4 +500,92 @@ body:has(.practice-layout) > .app-header { display: none; }
   .practice-focus-header .practice-back,
   .lookup-result-actions .practice-settings-trigger,
   .lookup-result-toolbar .mode-toggle-buttons { backdrop-filter: none; }
+}
+
+/* Small screens are a real workspace, not a scaled desktop canvas. */
+.score-touch-navigation { display: none; }
+.practice-layout > *, .practice-workbench > *, .practice-focus-header > * { min-width: 0; }
+.practice-page-shell { padding-left: max(20px, env(safe-area-inset-left)); padding-right: max(20px, env(safe-area-inset-right)); }
+.practice-layout :is(.score-stage, .keyboard-scroll-shell, .guitar-fretboard-shell) { -webkit-overflow-scrolling: touch; }
+.practice-layout .keyboard-layout-row { justify-content: safe center; }
+.practice-layout .keyboard-scroll-shell { overscroll-behavior: contain; }
+
+@media (max-width: 1000px) {
+  .practice-page-shell { padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); overflow: hidden; }
+  .practice-layout { grid-template-rows: auto minmax(0, 1fr); gap: 8px; }
+  .practice-focus-header { grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 6px 8px; padding: 0; }
+  .practice-work-identity { flex-direction: column; align-items: flex-start; gap: 1px; }
+  .practice-focus-header h1 { max-width: 100%; font-size: 16px; }
+  .practice-key-signature { max-width: 100%; flex-wrap: wrap; gap: 2px 5px; font-size: 10px; }
+  .practice-key-signature strong { font-size: 12px; }
+  .practice-key-signature small { font-size: 11px; }
+  .practice-focus-header > .theme-toggle { grid-column: 3; grid-row: 1; width: 44px; height: 44px; padding: 0; justify-content: center; }
+  .practice-focus-header .theme-toggle-label { display: none; }
+  .practice-focus-header > .practice-toolbar { grid-column: 1 / -1; grid-row: 2; justify-content: space-between; gap: 4px; min-width: 0; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
+  .practice-layout .practice-toolbar .toolbar-group { gap: 0; flex-shrink: 0; }
+  .practice-layout .practice-toolbar :is(.secondary-button, .ghost-button) { width: 44px; min-width: 44px; min-height: 44px; }
+  .practice-focus-header .score-toolbar-page-controls { padding-right: 6px; }
+  .practice-layout .practice-toolbar strong { font-size: 11px; }
+  .practice-layout .practice-toolbar a { width: auto; min-width: 44px; }
+  .practice-focus-header .practice-back { width: 44px; height: 44px; min-height: 44px; }
+  .practice-layout .practice-workbench,
+  .practice-layout .practice-workbench:has(.keyboard-layout:not([data-rows="1"])) { grid-template-rows: minmax(0, 1fr) clamp(180px, 33dvh, 280px); gap: 8px; }
+  .practice-layout .practice-workbench:has(.guitar-card),
+  .practice-layout .practice-workbench:has(.guitar-summary-note),
+  .practice-layout .practice-workbench:has(.guitar-compact-pill:nth-child(n+4)),
+  .practice-layout .practice-workbench:has(.guitar-summary-note):has(.guitar-compact-pill:nth-child(n+4)) { grid-template-rows: minmax(0, 1fr) clamp(210px, 38dvh, 320px); }
+  .practice-layout .score-stage { padding: 6px; }
+  .practice-layout .musicxml-sheet-host { padding: 6px 4px 20px; min-width: 0; }
+  .score-touch-navigation { display: flex; justify-content: space-between; gap: 2px; flex: 0 0 auto; }
+  .score-touch-navigation .ghost-button { display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 44px; min-height: 44px; padding: 4px 6px; font-size: 11px; flex: 1; }
+  .lookup-result-content { padding: 8px 10px; gap: 6px; }
+  .lookup-result-toolbar { flex-wrap: wrap; gap: 4px 8px; }
+  .lookup-selection-label { flex: 1 1 110px; font-size: 12px; }
+  .lookup-result-actions { margin-left: auto; gap: 4px; }
+  .lookup-result-toolbar .mode-toggle-button { min-height: 44px; padding: 6px 10px; }
+  .lookup-result-actions .practice-settings-trigger { width: 44px; height: 44px; min-height: 44px; }
+  .practice-layout .keyboard-stage { --white-key-height: 112px; --black-key-height: 73px; }
+  .practice-layout .keyboard-layout:not([data-rows="1"]) .keyboard-stage { --white-key-height: 88px; --black-key-height: 57px; }
+  .practice-layout .piano-key-black .piano-key-label { font-size: 10px; }
+  .practice-layout .instrument-note-summary { max-width: 100%; font-size: 14px; }
+  .practice-layout .instrument-note-chip { font-size: 14px; flex-shrink: 0; }
+  .practice-layout .guitar-card { overflow-y: auto; overscroll-behavior: contain; }
+  .practice-layout .guitar-fretboard-grid { min-width: 620px; grid-template-columns: 48px repeat(13, minmax(44px, 1fr)); }
+  .practice-layout :is(.guitar-string-label, .guitar-fret-cell) { min-height: 36px; }
+  .practice-layout .guitar-guidance-row { flex-direction: column; max-height: none; }
+  .practice-layout .guitar-card .guitar-guidance-row { max-height: none; }
+  .practice-settings-dialog { padding: 18px; max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 24px); }
+  .practice-settings-heading button { width: 44px; height: 44px; min-height: 44px; }
+  .practice-settings-content :is(input, select) { min-height: 44px; font-size: 16px; }
+}
+
+/* Landscape keeps both surfaces reachable instead of squeezing the paper shut. */
+@media (max-height: 540px) and (max-width: 1000px) and (orientation: landscape) {
+  .practice-focus-header { grid-template-columns: 44px minmax(80px, 1fr) auto 44px; }
+  .practice-focus-header > .practice-toolbar { grid-column: 3; grid-row: 1; }
+  .practice-focus-header > .theme-toggle { grid-column: 4; }
+  .practice-key-signature > span, .practice-key-signature > small { display: none; }
+  .practice-layout .practice-workbench,
+  .practice-layout .practice-workbench:has(.keyboard-layout:not([data-rows="1"])),
+  .practice-layout .practice-workbench:has(.guitar-card),
+  .practice-layout .practice-workbench:has(.guitar-summary-note),
+  .practice-layout .practice-workbench:has(.guitar-compact-pill:nth-child(n+4)),
+  .practice-layout .practice-workbench:has(.guitar-summary-note):has(.guitar-compact-pill:nth-child(n+4)) { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+  .lookup-result-toolbar { align-items: flex-start; }
+  .lookup-selection-label { flex-basis: 100%; }
+  .score-touch-navigation .ghost-button span { display: none; }
+}
+@media (max-width: 380px) {
+  .practice-page-shell { padding-inline: max(6px, env(safe-area-inset-left)); }
+  .practice-focus-header .score-toolbar-page-controls { padding-right: 3px; }
+  .practice-layout .practice-toolbar strong { font-size: 10px; }
+  .lookup-result-content { padding-inline: 8px; }
+  .lookup-selection-label { flex-basis: 100%; }
+  .lookup-result-actions { margin-left: 0; }
+}
+@media (pointer: coarse) {
+  button, a, summary, select { touch-action: manipulation; }
+  .dashboard-home :is(button, select), .app-header .theme-toggle { min-height: 44px; }
+  .dashboard-home .icon-button { width: 44px; height: 44px; }
+  .dashboard-home :is(input, select) { font-size: 16px; }
 }

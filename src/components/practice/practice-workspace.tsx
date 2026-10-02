@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
-import { ArrowLeft, Guitar, Piano, ScanLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp, ArrowDown, Guitar, Piano, ScanLine } from "lucide-react";
 import { GlassSurface } from "@/components/glass-surface";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PracticeSettings } from "@/components/practice/practice-settings";
@@ -253,8 +253,7 @@ export function PracticeWorkspace({ initialWork }: PracticeWorkspaceProps) {
     setSelectedObjectId(selection.objectId);
   }
 
-  const moveSelection = useEffectEvent(
-    (direction: "previous" | "next" | "up_staff" | "down_staff") => {
+  function navigateSelection(direction: "previous" | "next" | "up_staff" | "down_staff") {
       const nextSelection = getAdjacentPracticeSelection({
         pages: work.pages,
         currentPageIndex,
@@ -267,8 +266,9 @@ export function PracticeWorkspace({ initialWork }: PracticeWorkspaceProps) {
       }
 
       handleSelectObject(nextSelection);
-    },
-  );
+  }
+
+  const moveSelection = useEffectEvent(navigateSelection);
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -346,6 +346,21 @@ export function PracticeWorkspace({ initialWork }: PracticeWorkspaceProps) {
           {hasPendingRecognition ? (
             <p className="practice-notice" role="status">正在识别谱面，完成后就能点选音符。</p>
           ) : null}
+          <nav className="score-touch-navigation" aria-label="音符导航">
+            {([
+              ["previous", "上一音", ArrowLeft],
+              ["next", "下一音", ArrowRight],
+              ["up_staff", "上方声部", ArrowUp],
+              ["down_staff", "下方声部", ArrowDown],
+            ] as const).map(([direction, label, Icon]) => (
+              <button key={direction} type="button" className="ghost-button"
+                aria-label={label} title={label}
+                disabled={!getAdjacentPracticeSelection({ pages: work.pages, currentPageIndex, selectedObjectId, direction })}
+                onClick={() => navigateSelection(direction)}>
+                <Icon size={16} aria-hidden="true" /><span>{label}</span>
+              </button>
+            ))}
+          </nav>
           <ScoreView
             pages={work.pages}
             currentPageIndex={currentPage?.pageIndex ?? 0}

@@ -111,3 +111,17 @@ describe("compact keyboard layout", () => {
     expect(visible.size).toBe(88);
   });
 });
+
+describe("phone width pitch preservation", () => {
+  it.each([284, 339, 354, 394])("keeps octave-separated and accidental pitches at %i px", (width) => {
+    const notes = ["C2", "F#4", "C5", "G#5", "C8"];
+    const selected = new Set(notes.map((note) => noteNameToMidi(note)!));
+    const rows = getCompactKeyboardLayout(selected, width);
+    const visible = new Set(rows.flatMap((row) => row.regions.flatMap((r) => r.map((key) => key.midi))));
+    for (const midi of selected) expect(visible.has(midi)).toBe(true);
+    for (const row of rows) {
+      const size = row.regions.reduce((sum, region) => sum + region.filter((k) => !k.isBlack).length * row.whiteKeyWidth + KEYBOARD_REGION_PADDING, 0) + (row.regions.length - 1) * KEYBOARD_REGION_GAP;
+      expect(size).toBeLessThanOrEqual(width + 1);
+    }
+  });
+});

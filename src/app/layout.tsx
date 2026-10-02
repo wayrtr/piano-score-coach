@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Piano } from "lucide-react";
 
@@ -8,6 +8,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import "./globals.css";
 import "./workspace.css";
 import "./practice.css";
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
 
 export const metadata: Metadata = {
   title: "看谱找琴键",

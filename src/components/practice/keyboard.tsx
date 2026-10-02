@@ -270,7 +270,7 @@ export function Keyboard({
                                 data-midi={key.midi}
                               >
                                 {shouldShowVisibleLabel(key.noteName, isActive, isPreview) ? (
-                                  <span className="piano-key-label">{compact ? key.noteName.replace(/-?\d+$/, "") : key.noteName}</span>
+                                  <span className="piano-key-label">{key.noteName}</span>
                                 ) : null}
                               </span>
                             );

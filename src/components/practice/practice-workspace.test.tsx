@@ -291,11 +291,11 @@ describe("PracticeWorkspace lookup", () => {
     const { container } = await renderWorkspace();
     expect(fireEvent.keyDown(window, { key: " " })).toBe(true);
     expect(fireEvent.keyDown(window, { key: "Escape" })).toBe(true);
-    expect(screen.queryByRole("button", { name: /^(播放|暂停|停止|上一音|下一音)$/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^(播放|暂停|停止)$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "节拍器" })).not.toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("速度（BPM）")).not.toBeInTheDocument();
-    expect(screen.queryByText(/下一音|本页.*组|节拍器/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/本页.*组|节拍器/)).not.toBeInTheDocument();
     expect(container.querySelector(".practice-transport-wrap")).toBeNull();
     expectSelection("mxo-m0001-s1-v1-o0001", ["E4"]);
   });
@@ -498,5 +498,22 @@ describe("PracticeWorkspace lookup", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("这份 MusicXML 导入缺少可点击音符对象");
     expect(screen.getByRole("link", { name: "回到首页重新导入" })).toHaveAttribute("href", "/");
     expectSelection(null, []);
+  });
+});
+
+describe("touch note navigation", () => {
+  afterEach(cleanup);
+  it("offers previous/next and staff navigation with the same exact pitch selection", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({}) })));
+    await renderWorkspace(grandStaffEventFixture);
+    fireEvent.click(screen.getByRole("button", { name: "下一音" }));
+    expectSelection("treble_next", ["G4"]);
+    fireEvent.click(screen.getByRole("button", { name: "下方声部" }));
+    expectSelection("bass_next", ["D3"]);
+    fireEvent.click(screen.getByRole("button", { name: "上一音" }));
+    expectSelection("treble_now", ["E4"]);
+    fireEvent.click(screen.getByRole("button", { name: "下方声部" }));
+    expectSelection("bass_now", ["C3"]);
+    vi.unstubAllGlobals();
   });
 });
